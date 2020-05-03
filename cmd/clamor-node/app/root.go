@@ -3,41 +3,42 @@ package app
 import (
 	"flag"
 	"fmt"
-	"os"
 
+	"github.com/containerd/containerd"
 	"github.com/mokrz/clamor/pkg/node"
 )
 
 func Execute() {
-	serveCmd := flag.NewFlagSet("serve", flag.ExitOnError)
-	configFile := serveCmd.String("config", "/home/ubuntu/.clamor/config.json", "Path to configuration file")
+	configFile := flag.String("config", "/home/ubuntu/.clamor/config.json", "Path to configuration file")
 	var (
 		cfg        *node.Config
 		cfgLoadErr error
 	)
 
-	if len(os.Args) < 2 {
-		fmt.Printf("Usage: clamor [command]\n")
-		return
-	}
+	flag.Parse()
 
-	switch os.Args[1] {
-	case "serve":
-		serveCmd.Parse(os.Args[2:])
+	if configFile != nil {
+		cfg, cfgLoadErr = node.LoadConfig(*configFile)
 
-		if configFile != nil {
-			cfg, cfgLoadErr = node.LoadConfig(*configFile)
-
-			if cfgLoadErr != nil {
-				fmt.Printf("failed to load config with error: %s\n", cfgLoadErr.Error())
-				return
-			}
+		if cfgLoadErr != nil {
+			fmt.Printf("node.LoadConfig failed with error: %s\n", cfgLoadErr.Error())
+			return
 		}
+	}
 
-		_ = node.New(cfg, nil).Serve()
-		return
-	default:
-		fmt.Printf("Usage: clamor [command]\n")
+	ctr, ctrErr := containerd.New("/run/containerd/containerd.sock")
+
+	if ctrErr != nil {
+		fmt.Printf("containerd.New failed with error: %s\n", ctrErr.Error())
 		return
 	}
+
+	defer ctr.Close()
+
+	if serveErr := node.NewNode(cfg, ctr).Serve(); serveErr != nil {
+		fmt.Printf("node.Serve() failed with error: %s\n", serveErr.Error())
+		return
+	}
+
+	return
 }

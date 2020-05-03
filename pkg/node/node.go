@@ -3,6 +3,7 @@ package node
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
@@ -10,8 +11,20 @@ import (
 )
 
 type Node struct {
-	Cfg Config
+	Cfg *Config
 	Ctr *containerd.Client
+}
+
+func NewNode(cfg *Config, ctr *containerd.Client) *Node {
+	return &Node{
+		Cfg: cfg,
+		Ctr: ctr,
+	}
+}
+
+func (n Node) Serve() (err error) {
+	fmt.Println("servin on: " + n.Cfg.Name)
+	return nil
 }
 
 func (n Node) CreateImage(ctx context.Context, imgRef string) (err error) {
