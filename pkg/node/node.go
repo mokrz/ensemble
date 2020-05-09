@@ -3,7 +3,6 @@ package node
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
@@ -23,7 +22,6 @@ func NewNode(cfg *Config, ctr *containerd.Client) *Node {
 }
 
 func (n Node) Serve() (err error) {
-	fmt.Println("servin on: " + n.Cfg.Name)
 	return nil
 }
 
@@ -37,7 +35,7 @@ func (n Node) CreateImage(ctx context.Context, imgRef string) (err error) {
 	return nil
 }
 
-func (n Node) CreateContainer(ctx context.Context, imgRef, containerName, ssName string) (containerID string, err error) {
+func (n Node) CreateContainer(ctx context.Context, imgRef, containerName string) (containerID string, err error) {
 	image, getImgErr := n.Ctr.GetImage(ctx, imgRef)
 
 	if getImgErr != nil {
@@ -48,7 +46,7 @@ func (n Node) CreateContainer(ctx context.Context, imgRef, containerName, ssName
 		ctx,
 		containerName,
 		containerd.WithImage(image),
-		containerd.WithNewSnapshot(ssName, image),
+		containerd.WithNewSnapshot(containerName, image),
 		containerd.WithNewSpec(oci.WithImageConfig(image)),
 	)
 

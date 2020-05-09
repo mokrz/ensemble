@@ -9,6 +9,8 @@ import (
 type Config struct {
 	Name           string `json:"name"`
 	ContainerdPath string `json:"containerd_path"`
+	APIHost        string `json:"api_host"`
+	APIPort        int    `json:"api_port"`
 }
 
 func LoadConfig(path string) (cfg *Config, err error) {
