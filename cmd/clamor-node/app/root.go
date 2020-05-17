@@ -1,6 +1,3 @@
-/*
-Package app ties together the clamor-node CLI tools.
-*/
 package app
 
 import (
