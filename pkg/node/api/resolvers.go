@@ -10,16 +10,22 @@ import (
 	"github.com/mokrz/clamor/pkg/node"
 )
 
+// Image instances hold metadata for a container image.
+// TODO: Add image properties (size, age, etc.).
 type Image struct {
 	Name string `json:"ref"`
 }
 
+// Container instances hold metadata for a container.
+// TODO: Add container properties (size, age, etc.).
 type Container struct {
 	ID    string `json:"id"`
 	Image Image  `json:"image"`
 	Task  Task   `json:"task"`
 }
 
+// Task instances hold metadata for a container task.
+// TODO: Add task properties (PIDs, metrics, etc.).
 type Task struct {
 	ID          string `json:"id"`
 	ContainerID string `json:"container_id"`

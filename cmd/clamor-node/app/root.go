@@ -1,3 +1,6 @@
+/*
+Package app ties together the clamor-node CLI tools.
+*/
 package app
 
 import (
@@ -10,6 +13,8 @@ import (
 	node_api "github.com/mokrz/clamor/pkg/node/api"
 )
 
+// Execute runs the root clamor-node logic.
+// It's responsible for loading the given configuration, allocating dependencies and starting the clamor-node API daemon.
 func Execute() {
 	configFile := flag.String("config", "/home/ubuntu/.clamor/config.json", "Path to configuration file")
 	var (
