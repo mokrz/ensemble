@@ -7,11 +7,13 @@ import (
 	"github.com/graphql-go/graphql"
 )
 
+// Server holds various API server resources.
 type Server struct {
 	SockAddr string
 	Schema   graphql.Schema
 }
 
+// NewServer returns Server instances.
 func NewServer(schema graphql.Schema, sockAddr string) (apiServer *Server) {
 	return &Server{
 		SockAddr: sockAddr,
@@ -19,6 +21,7 @@ func NewServer(schema graphql.Schema, sockAddr string) (apiServer *Server) {
 	}
 }
 
+// Serve graphql requests over HTTP on the Server instance's SockAddr.
 func (as Server) Serve() (err error) {
 	http.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
 		result := graphql.Do(graphql.Params{

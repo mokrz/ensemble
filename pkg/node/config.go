@@ -6,6 +6,7 @@ import (
 	"os"
 )
 
+// Config holds administrative settings
 type Config struct {
 	Name           string `json:"name"`
 	ContainerdPath string `json:"containerd_path"`
@@ -13,6 +14,7 @@ type Config struct {
 	APIPort        int    `json:"api_port"`
 }
 
+// LoadConfig reads the given .json file into a node.Config instance
 func LoadConfig(path string) (cfg *Config, err error) {
 	file, openErr := os.Open(path)
 

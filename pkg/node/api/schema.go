@@ -5,6 +5,8 @@ import (
 	"github.com/mokrz/clamor/pkg/node"
 )
 
+// NewGraphQLSchema returns a new graphql.Schema instance containing root Query and root Mutation types.
+// It's responsible for allocating the remainder of the API's graphql fields and wiring them to their resolvers/arguments.
 func NewGraphQLSchema(sp node.Service) (schema graphql.Schema, err error) {
 	queryType := graphql.NewObject(graphql.ObjectConfig{
 		Name: "Query",
