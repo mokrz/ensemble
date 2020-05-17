@@ -3,9 +3,11 @@ package app
 import (
 	"flag"
 	"fmt"
+	"strconv"
 
 	"github.com/containerd/containerd"
 	"github.com/mokrz/clamor/pkg/node"
+	node_api "github.com/mokrz/clamor/pkg/node/api"
 )
 
 func Execute() {
@@ -35,7 +37,17 @@ func Execute() {
 
 	defer ctr.Close()
 
-	if serveErr := node.NewNode(cfg, ctr).Serve(); serveErr != nil {
+	nodeSvc := node.NewNode(ctr)
+	gqlSchema, gqlSchemaErr := node_api.NewGraphQLSchema(nodeSvc)
+
+	if gqlSchemaErr != nil {
+		fmt.Printf("node_api.NewGraphQLSchema failed with error: %s\n", gqlSchemaErr.Error())
+		return
+	}
+
+	apiServer := node_api.NewServer(gqlSchema, cfg.APIHost+":"+strconv.Itoa(cfg.APIPort))
+
+	if serveErr := apiServer.Serve(); serveErr != nil {
 		fmt.Printf("node.Serve() failed with error: %s\n", serveErr.Error())
 		return
 	}
