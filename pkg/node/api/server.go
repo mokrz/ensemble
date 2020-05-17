@@ -1,3 +1,6 @@
+/*
+Package api defines Node GraphQL fields, their resolvers, their arguments and their exposure.
+*/
 package api
 
 import (
