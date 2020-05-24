@@ -40,7 +40,8 @@ func getImageInfo(ctx context.Context, image containerd.Image) Image {
 	}
 }
 
-func newImageResolver(sp node.Service) graphql.FieldResolveFn {
+// NewImageResolver returns a graphql resolver that looks up the given image name in the given namespace
+func NewImageResolver(svc node.Service) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, ref           string
@@ -59,7 +60,7 @@ func newImageResolver(sp node.Service) graphql.FieldResolveFn {
 
 		ctx := namespaces.WithNamespace(context.Background(), namespace)
 
-		if image, getImageErr = sp.GetImage(ctx, ref); getImageErr != nil {
+		if image, getImageErr = svc.GetImage(ctx, ref); getImageErr != nil {
 			return nil, errors.New("image resolver failed with error: " + getImageErr.Error())
 		}
 
@@ -67,7 +68,8 @@ func newImageResolver(sp node.Service) graphql.FieldResolveFn {
 	}
 }
 
-func newImagesResolver(sp node.Service) graphql.FieldResolveFn {
+// NewImagesResolver returns a graphql resolver that looks up all images in the given namespace
+func NewImagesResolver(svc node.Service) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, filter           string
@@ -89,7 +91,7 @@ func newImagesResolver(sp node.Service) graphql.FieldResolveFn {
 
 		ctx := namespaces.WithNamespace(context.Background(), namespace)
 
-		if images, getImagesErr = sp.GetImages(ctx, filter); getImagesErr != nil {
+		if images, getImagesErr = svc.GetImages(ctx, filter); getImagesErr != nil {
 			return nil, errors.New("images resolver failed with error: " + getImagesErr.Error())
 		}
 
@@ -124,7 +126,8 @@ func getContainerInfo(ctx context.Context, container containerd.Container) Conta
 	}
 }
 
-func newContainerResolver(sp node.Service) graphql.FieldResolveFn {
+// NewContainerResolver returns a graphql resolver that looks up the given container ID in the given namespace
+func NewContainerResolver(svc node.Service) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, id           string
@@ -143,7 +146,7 @@ func newContainerResolver(sp node.Service) graphql.FieldResolveFn {
 
 		ctx := namespaces.WithNamespace(context.Background(), namespace)
 
-		if container, getContainerErr = sp.GetContainer(ctx, id); getContainerErr != nil {
+		if container, getContainerErr = svc.GetContainer(ctx, id); getContainerErr != nil {
 			return nil, errors.New("container resolver failed with error: " + getContainerErr.Error())
 		}
 
@@ -151,7 +154,8 @@ func newContainerResolver(sp node.Service) graphql.FieldResolveFn {
 	}
 }
 
-func newContainersResolver(sp node.Service) graphql.FieldResolveFn {
+// NewContainersResolver returns a graphql resolver that looks up all containers in the given namespace
+func NewContainersResolver(svc node.Service) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, filter           string
@@ -173,7 +177,7 @@ func newContainersResolver(sp node.Service) graphql.FieldResolveFn {
 
 		ctx := namespaces.WithNamespace(context.Background(), namespace)
 
-		if containers, getContainersErr = sp.GetContainers(ctx, filter); getContainersErr != nil {
+		if containers, getContainersErr = svc.GetContainers(ctx, filter); getContainersErr != nil {
 			return nil, errors.New("containers resolver failed with error: " + getContainersErr.Error())
 		}
 
@@ -205,7 +209,8 @@ func getTaskInfo(ctx context.Context, task containerd.Task) Task {
 	}
 }
 
-func newTaskResolver(sp node.Service) graphql.FieldResolveFn {
+// NewTaskResolver returns a graphql resolver that looks up the current task for the given container ID in the given namespace
+func NewTaskResolver(svc node.Service) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, containerID           string
@@ -227,7 +232,7 @@ func newTaskResolver(sp node.Service) graphql.FieldResolveFn {
 
 		ctx := namespaces.WithNamespace(context.Background(), namespace)
 
-		if task, getTaskErr = sp.GetTask(ctx, containerID); getTaskErr != nil {
+		if task, getTaskErr = svc.GetTask(ctx, containerID); getTaskErr != nil {
 			return nil, errors.New("container resolver failed with error: " + getTaskErr.Error())
 		}
 
@@ -235,7 +240,8 @@ func newTaskResolver(sp node.Service) graphql.FieldResolveFn {
 	}
 }
 
-func newTasksResolver(sp node.Service) graphql.FieldResolveFn {
+// NewTasksResolver returns a graphql resolver that looks up all container tasks in the given namespace
+func NewTasksResolver(svc node.Service) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, filter           string
@@ -257,7 +263,7 @@ func newTasksResolver(sp node.Service) graphql.FieldResolveFn {
 
 		ctx := namespaces.WithNamespace(context.Background(), namespace)
 
-		if tasks, getTasksErr = sp.GetTasks(ctx, filter); getTasksErr != nil {
+		if tasks, getTasksErr = svc.GetTasks(ctx, filter); getTasksErr != nil {
 			return nil, errors.New("containers resolver failed with error: " + getTasksErr.Error())
 		}
 
@@ -270,7 +276,8 @@ func newTasksResolver(sp node.Service) graphql.FieldResolveFn {
 	}
 }
 
-func newCreateImageResolver(sp node.Service) graphql.FieldResolveFn {
+// NewCreateImageResolver returns a graphql resolver that creates a container image from the given ref, pulling from remote registries if necessary
+func NewCreateImageResolver(svc node.Service) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, ref           string
@@ -289,7 +296,7 @@ func newCreateImageResolver(sp node.Service) graphql.FieldResolveFn {
 
 		ctx := namespaces.WithNamespace(context.Background(), namespace)
 
-		if image, imagePullErr = sp.CreateImage(ctx, ref); imagePullErr != nil {
+		if image, imagePullErr = svc.CreateImage(ctx, ref); imagePullErr != nil {
 			return nil, errors.New("createImage resolver failed to create image: " + ref + " with error:  " + imagePullErr.Error())
 		}
 
@@ -297,20 +304,21 @@ func newCreateImageResolver(sp node.Service) graphql.FieldResolveFn {
 	}
 }
 
-func newCreateContainerResolver(sp node.Service) graphql.FieldResolveFn {
+// NewCreateContainerResolver returns a graphql resolver that creates a container with the given ID from the given image
+func NewCreateContainerResolver(sp node.Service) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
-			namespace, ID, imgRef             string
-			container                         containerd.Container
-			namespaceValid, refValid, IDValid bool
-			containerCreateErr                error
+			namespace, ID, imageName                string
+			container                               containerd.Container
+			namespaceValid, imageNameValid, IDValid bool
+			containerCreateErr                      error
 		)
 
 		if namespace, namespaceValid = p.Args["namespace"].(string); !namespaceValid {
 			return nil, errors.New("invalid request")
 		}
 
-		if imgRef, refValid = p.Args["image_ref"].(string); !refValid {
+		if imageName, imageNameValid = p.Args["image_name"].(string); !imageNameValid {
 			return nil, errors.New("invalid request")
 		}
 
@@ -320,7 +328,7 @@ func newCreateContainerResolver(sp node.Service) graphql.FieldResolveFn {
 
 		ctx := namespaces.WithNamespace(context.Background(), namespace)
 
-		if container, containerCreateErr = sp.CreateContainer(ctx, imgRef, ID); containerCreateErr != nil {
+		if container, containerCreateErr = sp.CreateContainer(ctx, imageName, ID); containerCreateErr != nil {
 			return nil, errors.New("createContainer resolver failed to create container: " + ID + " with error:  " + containerCreateErr.Error())
 		}
 
@@ -328,7 +336,8 @@ func newCreateContainerResolver(sp node.Service) graphql.FieldResolveFn {
 	}
 }
 
-func newCreateTaskResolver(sp node.Service) graphql.FieldResolveFn {
+// NewCreateTaskResolver returns a graphql resolver that creates a task with the given ID from the given image
+func NewCreateTaskResolver(ns node.Service) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, containerID           string
@@ -347,7 +356,7 @@ func newCreateTaskResolver(sp node.Service) graphql.FieldResolveFn {
 
 		ctx := namespaces.WithNamespace(context.Background(), namespace)
 
-		if task, createTaskErr = sp.CreateTask(ctx, containerID); createTaskErr != nil {
+		if task, createTaskErr = ns.CreateTask(ctx, containerID); createTaskErr != nil {
 			return nil, errors.New("createTask resolver failed to create task for container: " + containerID + " with error:  " + createTaskErr.Error())
 		}
 
@@ -355,7 +364,8 @@ func newCreateTaskResolver(sp node.Service) graphql.FieldResolveFn {
 	}
 }
 
-func newKillTaskResolver(sp node.Service) graphql.FieldResolveFn {
+// NewKillTaskResolver returns a graphql resolver that kills the task associated with the given container
+func NewKillTaskResolver(ns node.Service) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, containerID           string
@@ -371,7 +381,7 @@ func newKillTaskResolver(sp node.Service) graphql.FieldResolveFn {
 			return nil, errors.New("invalid request")
 		}
 
-		if killTaskErr = sp.KillTask(namespaces.WithNamespace(context.Background(), namespace), containerID); killTaskErr != nil {
+		if killTaskErr = ns.KillTask(namespaces.WithNamespace(context.Background(), namespace), containerID); killTaskErr != nil {
 			return nil, errors.New("killTask resolver failed with error: " + killTaskErr.Error())
 		}
 
@@ -379,7 +389,8 @@ func newKillTaskResolver(sp node.Service) graphql.FieldResolveFn {
 	}
 }
 
-func newDeleteImageResolver(sp node.Service) graphql.FieldResolveFn {
+// NewDeleteImageResolver returns a graphql resolver that deletes the given image
+func NewDeleteImageResolver(ns node.Service) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, ref           string
@@ -395,7 +406,7 @@ func newDeleteImageResolver(sp node.Service) graphql.FieldResolveFn {
 			return nil, errors.New("invalid request")
 		}
 
-		if deleteImageErr = sp.DeleteImage(namespaces.WithNamespace(context.Background(), namespace), ref); deleteImageErr != nil {
+		if deleteImageErr = ns.DeleteImage(namespaces.WithNamespace(context.Background(), namespace), ref); deleteImageErr != nil {
 			return nil, errors.New("deleteImage resolver failed with error: " + deleteImageErr.Error())
 		}
 
@@ -403,7 +414,8 @@ func newDeleteImageResolver(sp node.Service) graphql.FieldResolveFn {
 	}
 }
 
-func newDeleteContainerResolver(sp node.Service) graphql.FieldResolveFn {
+// NewDeleteContainerResolver returns a graphql resolver that deletes the given container
+func NewDeleteContainerResolver(ns node.Service) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, ID           string
@@ -419,7 +431,7 @@ func newDeleteContainerResolver(sp node.Service) graphql.FieldResolveFn {
 			return nil, errors.New("invalid request")
 		}
 
-		if deleteContainerErr = sp.DeleteContainer(namespaces.WithNamespace(context.Background(), namespace), ID); deleteContainerErr != nil {
+		if deleteContainerErr = ns.DeleteContainer(namespaces.WithNamespace(context.Background(), namespace), ID); deleteContainerErr != nil {
 			return nil, errors.New("deleteContainer resolver failed with error: " + deleteContainerErr.Error())
 		}
 
@@ -427,7 +439,8 @@ func newDeleteContainerResolver(sp node.Service) graphql.FieldResolveFn {
 	}
 }
 
-func newDeleteTaskResolver(sp node.Service) graphql.FieldResolveFn {
+// NewDeleteTaskResolver returns a graphql resolver that deletes the given task
+func NewDeleteTaskResolver(ns node.Service) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, containerID           string
@@ -444,7 +457,7 @@ func newDeleteTaskResolver(sp node.Service) graphql.FieldResolveFn {
 			return nil, errors.New("invalid request")
 		}
 
-		if exitStatus, deleteTaskErr = sp.DeleteTask(namespaces.WithNamespace(context.Background(), namespace), containerID); deleteTaskErr != nil {
+		if exitStatus, deleteTaskErr = ns.DeleteTask(namespaces.WithNamespace(context.Background(), namespace), containerID); deleteTaskErr != nil {
 			return nil, errors.New("deleteTask resolver failed with error: " + deleteTaskErr.Error())
 		}
 
