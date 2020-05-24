@@ -11,25 +11,25 @@ func NewGraphQLSchema(ns node.Service) (schema graphql.Schema, err error) {
 	queryType := graphql.NewObject(graphql.ObjectConfig{
 		Name: "Query",
 		Fields: graphql.Fields{
-			"image":      newImageField(ns, NewImageResolver(ns), imageArgs),
-			"images":     newImagesField(ns, NewImagesResolver(ns), imagesArgs),
-			"container":  newContainerField(ns, NewContainerResolver(ns), containerArgs),
-			"containers": newContainersField(ns, NewContainersResolver(ns), containersArgs),
-			"task":       newTaskField(ns, NewTaskResolver(ns), taskArgs),
-			"tasks":      newTasksField(ns, NewTasksResolver(ns), tasksArgs),
+			"image":      NewImageField(ns, NewImageResolver(ns), imageArgs),
+			"images":     NewImagesField(ns, NewImagesResolver(ns), imagesArgs),
+			"container":  NewContainerField(ns, NewContainerResolver(ns), containerArgs),
+			"containers": NewContainersField(ns, NewContainersResolver(ns), containersArgs),
+			"task":       NewTaskField(ns, NewTaskResolver(ns), taskArgs),
+			"tasks":      NewTasksField(ns, NewTasksResolver(ns), tasksArgs),
 		},
 	})
 
 	mutationType := graphql.NewObject(graphql.ObjectConfig{
 		Name: "Mutation",
 		Fields: graphql.Fields{
-			"createImage":     newImageField(ns, NewCreateImageResolver(ns), createImageArgs),
-			"createContainer": newContainerField(ns, NewCreateContainerResolver(ns), createContainerArgs),
-			"createTask":      newTaskField(ns, NewCreateTaskResolver(ns), createTaskArgs),
-			"deleteImage":     newImageField(ns, NewDeleteImageResolver(ns), imageArgs),
-			"deleteContainer": newContainerField(ns, NewDeleteContainerResolver(ns), containerArgs),
-			"deleteTask":      newTaskField(ns, NewDeleteTaskResolver(ns), taskArgs),
-			"killTask":        newTaskField(ns, NewKillTaskResolver(ns), taskArgs),
+			"createImage":     NewImageField(ns, NewCreateImageResolver(ns), createImageArgs),
+			"createContainer": NewContainerField(ns, NewCreateContainerResolver(ns), createContainerArgs),
+			"createTask":      NewTaskField(ns, NewCreateTaskResolver(ns), createTaskArgs),
+			"deleteImage":     NewImageField(ns, NewDeleteImageResolver(ns), imageArgs),
+			"deleteContainer": NewContainerField(ns, NewDeleteContainerResolver(ns), containerArgs),
+			"deleteTask":      NewTaskField(ns, NewDeleteTaskResolver(ns), taskArgs),
+			"killTask":        NewTaskField(ns, NewKillTaskResolver(ns), taskArgs),
 		},
 	})
 
