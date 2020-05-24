@@ -8,7 +8,7 @@ import (
 var imageType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Image",
 	Fields: graphql.Fields{
-		"ref": &graphql.Field{
+		"name": &graphql.Field{
 			Type: graphql.String,
 		},
 	},
@@ -34,6 +34,9 @@ var taskType = graphql.NewObject(graphql.ObjectConfig{
 	Fields: graphql.Fields{
 		"id": &graphql.Field{
 			Type: graphql.String,
+		},
+		"container_id": &graphql.Field{
+			Type: graphql.Int,
 		},
 		"pid": &graphql.Field{
 			Type: graphql.Int,
