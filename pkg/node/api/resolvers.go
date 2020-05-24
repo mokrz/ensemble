@@ -108,9 +108,11 @@ func getContainerInfo(ctx context.Context, container containerd.Container) Conta
 		containerImage          containerd.Image
 		getTaskErr, getImageErr error
 	)
+
 	if containerImage, getImageErr = container.Image(ctx); getImageErr != nil {
 		return Container{}
 	}
+
 	if containerTask, getTaskErr = container.Task(ctx, nil); getTaskErr != nil {
 		return Container{}
 	}
