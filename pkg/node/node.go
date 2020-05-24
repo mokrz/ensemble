@@ -98,7 +98,7 @@ func (n Node) CreateContainer(ctx context.Context, imageName, id string) (contai
 	return container, nil
 }
 
-// CreateTask starts a new task for the given container and returns it.
+// CreateTask starts a new task for the given container.
 // It returns the created containerd.Task.
 // TODO: Figure out task I/O. Currently just using stdio.
 func (n Node) CreateTask(ctx context.Context, containerID string) (task containerd.Task, err error) {

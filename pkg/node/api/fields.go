@@ -8,7 +8,7 @@ import (
 var imageType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Image",
 	Fields: graphql.Fields{
-		"ref": &graphql.Field{
+		"name": &graphql.Field{
 			Type: graphql.String,
 		},
 	},
@@ -35,6 +35,9 @@ var taskType = graphql.NewObject(graphql.ObjectConfig{
 		"id": &graphql.Field{
 			Type: graphql.String,
 		},
+		"container_id": &graphql.Field{
+			Type: graphql.Int,
+		},
 		"pid": &graphql.Field{
 			Type: graphql.Int,
 		},
@@ -47,55 +50,67 @@ var taskType = graphql.NewObject(graphql.ObjectConfig{
 	},
 })
 
-func newImageField(sp node.Service, r graphql.FieldResolveFn, args graphql.FieldConfigArgument) (field *graphql.Field) {
+// NewImageField creates graphql fields for the image type.
+// The image field accepts the arguments defined by the given FieldConfigArgument and is resolved by the function r.
+func NewImageField(sp node.Service, r graphql.FieldResolveFn, args graphql.FieldConfigArgument) (field *graphql.Field) {
 	return &graphql.Field{
 		Type:        imageType,
-		Description: "Get image by ref",
+		Description: "Get image",
 		Args:        args,
 		Resolve:     r,
 	}
 }
 
-func newImagesField(sp node.Service, r graphql.FieldResolveFn, args graphql.FieldConfigArgument) (field *graphql.Field) {
+// NewImagesField creates graphql fields for the image list type.
+// The images field accepts the arguments defined by the given FieldConfigArgument and is resolved by the function r.
+func NewImagesField(sp node.Service, r graphql.FieldResolveFn, args graphql.FieldConfigArgument) (field *graphql.Field) {
 	return &graphql.Field{
 		Type:        graphql.NewList(imageType),
-		Description: "Get images",
+		Description: "Get image list",
 		Args:        args,
 		Resolve:     r,
 	}
 }
 
-func newContainerField(sp node.Service, r graphql.FieldResolveFn, args graphql.FieldConfigArgument) (field *graphql.Field) {
+// NewContainerField creates graphql fields for the container type.
+// The container field accepts the arguments defined by the given FieldConfigArgument and is resolved by the function r.
+func NewContainerField(sp node.Service, r graphql.FieldResolveFn, args graphql.FieldConfigArgument) (field *graphql.Field) {
 	return &graphql.Field{
 		Type:        containerType,
-		Description: "Get container by ID",
+		Description: "Get container",
 		Args:        args,
 		Resolve:     r,
 	}
 }
 
-func newContainersField(sp node.Service, r graphql.FieldResolveFn, args graphql.FieldConfigArgument) (field *graphql.Field) {
+// NewContainersField creates graphql fields for the container list type.
+// The containers field accepts the arguments defined by the given FieldConfigArgument and is resolved by the function r.
+func NewContainersField(sp node.Service, r graphql.FieldResolveFn, args graphql.FieldConfigArgument) (field *graphql.Field) {
 	return &graphql.Field{
 		Type:        graphql.NewList(containerType),
-		Description: "Get image by ref",
+		Description: "Get container list",
 		Args:        args,
 		Resolve:     r,
 	}
 }
 
-func newTaskField(sp node.Service, r graphql.FieldResolveFn, args graphql.FieldConfigArgument) (field *graphql.Field) {
+// NewTaskField creates graphql fields for the task type.
+// The task field accepts the arguments defined by the given FieldConfigArgument and is resolved by the function r.
+func NewTaskField(sp node.Service, r graphql.FieldResolveFn, args graphql.FieldConfigArgument) (field *graphql.Field) {
 	return &graphql.Field{
 		Type:        taskType,
-		Description: "Get image by ref",
+		Description: "Get task",
 		Args:        args,
 		Resolve:     r,
 	}
 }
 
-func newTasksField(sp node.Service, r graphql.FieldResolveFn, args graphql.FieldConfigArgument) (field *graphql.Field) {
+// NewTasksField creates graphql fields for the task list type.
+// The tasks field accepts the arguments defined by the given FieldConfigArgument and is resolved by the function r.
+func NewTasksField(sp node.Service, r graphql.FieldResolveFn, args graphql.FieldConfigArgument) (field *graphql.Field) {
 	return &graphql.Field{
 		Type:        graphql.NewList(taskType),
-		Description: "Get image by ref",
+		Description: "Get task list",
 		Args:        args,
 		Resolve:     r,
 	}
