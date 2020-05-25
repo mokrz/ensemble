@@ -296,7 +296,7 @@ func NewCreateImageResolver(svc node.Service) graphql.FieldResolveFn {
 
 		ctx := namespaces.WithNamespace(context.Background(), namespace)
 
-		if image, imagePullErr = svc.CreateImage(ctx, ref); imagePullErr != nil {
+		if image, imagePullErr = svc.PullImage(ctx, ref); imagePullErr != nil {
 			return nil, errors.New("createImage resolver failed to create image: " + ref + " with error:  " + imagePullErr.Error())
 		}
 

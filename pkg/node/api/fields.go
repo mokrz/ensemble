@@ -52,7 +52,7 @@ var taskType = graphql.NewObject(graphql.ObjectConfig{
 
 // NewImageField creates graphql fields for the image type.
 // The image field accepts the arguments defined by the given FieldConfigArgument and is resolved by the function r.
-func NewImageField(sp node.Service, r graphql.FieldResolveFn, args graphql.FieldConfigArgument) (field *graphql.Field) {
+func NewImageField(sp node.ImageService, r graphql.FieldResolveFn, args graphql.FieldConfigArgument) (field *graphql.Field) {
 	return &graphql.Field{
 		Type:        imageType,
 		Description: "Get image",
@@ -63,7 +63,7 @@ func NewImageField(sp node.Service, r graphql.FieldResolveFn, args graphql.Field
 
 // NewImagesField creates graphql fields for the image list type.
 // The images field accepts the arguments defined by the given FieldConfigArgument and is resolved by the function r.
-func NewImagesField(sp node.Service, r graphql.FieldResolveFn, args graphql.FieldConfigArgument) (field *graphql.Field) {
+func NewImagesField(sp node.ImageService, r graphql.FieldResolveFn, args graphql.FieldConfigArgument) (field *graphql.Field) {
 	return &graphql.Field{
 		Type:        graphql.NewList(imageType),
 		Description: "Get image list",
@@ -74,7 +74,7 @@ func NewImagesField(sp node.Service, r graphql.FieldResolveFn, args graphql.Fiel
 
 // NewContainerField creates graphql fields for the container type.
 // The container field accepts the arguments defined by the given FieldConfigArgument and is resolved by the function r.
-func NewContainerField(sp node.Service, r graphql.FieldResolveFn, args graphql.FieldConfigArgument) (field *graphql.Field) {
+func NewContainerField(sp node.ContainerService, r graphql.FieldResolveFn, args graphql.FieldConfigArgument) (field *graphql.Field) {
 	return &graphql.Field{
 		Type:        containerType,
 		Description: "Get container",
@@ -85,7 +85,7 @@ func NewContainerField(sp node.Service, r graphql.FieldResolveFn, args graphql.F
 
 // NewContainersField creates graphql fields for the container list type.
 // The containers field accepts the arguments defined by the given FieldConfigArgument and is resolved by the function r.
-func NewContainersField(sp node.Service, r graphql.FieldResolveFn, args graphql.FieldConfigArgument) (field *graphql.Field) {
+func NewContainersField(sp node.ContainerService, r graphql.FieldResolveFn, args graphql.FieldConfigArgument) (field *graphql.Field) {
 	return &graphql.Field{
 		Type:        graphql.NewList(containerType),
 		Description: "Get container list",
@@ -96,7 +96,7 @@ func NewContainersField(sp node.Service, r graphql.FieldResolveFn, args graphql.
 
 // NewTaskField creates graphql fields for the task type.
 // The task field accepts the arguments defined by the given FieldConfigArgument and is resolved by the function r.
-func NewTaskField(sp node.Service, r graphql.FieldResolveFn, args graphql.FieldConfigArgument) (field *graphql.Field) {
+func NewTaskField(sp node.TaskService, r graphql.FieldResolveFn, args graphql.FieldConfigArgument) (field *graphql.Field) {
 	return &graphql.Field{
 		Type:        taskType,
 		Description: "Get task",
@@ -107,7 +107,7 @@ func NewTaskField(sp node.Service, r graphql.FieldResolveFn, args graphql.FieldC
 
 // NewTasksField creates graphql fields for the task list type.
 // The tasks field accepts the arguments defined by the given FieldConfigArgument and is resolved by the function r.
-func NewTasksField(sp node.Service, r graphql.FieldResolveFn, args graphql.FieldConfigArgument) (field *graphql.Field) {
+func NewTasksField(sp node.TaskService, r graphql.FieldResolveFn, args graphql.FieldConfigArgument) (field *graphql.Field) {
 	return &graphql.Field{
 		Type:        graphql.NewList(taskType),
 		Description: "Get task list",

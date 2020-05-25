@@ -1,6 +1,8 @@
 /*
 Package node provides interfaces for containerd interaction and clamor-node business logic.
 Right now it's mostly just a wrapper around https://pkg.go.dev/github.com/containerd/containerd?tab=doc#Client.
+TODO: Consider k8s container runtime interface support.
+TODO: Encapsulate containerd types somehow, may be dependent on the above.
 */
 package node
 
@@ -14,26 +16,37 @@ import (
 	"github.com/containerd/containerd/oci"
 )
 
-// Node implements the node.Service interface.
+// Node implements the Service interfaces.
 type Node struct {
 	Ctr *containerd.Client
 }
 
-// Service contains methods that make up core clamor-node functionality.
-// TODO: Think about encapsulating containerd types.
-// TODO: Consider k8s container runtime interface support.
+// Service provides core node methods.
 type Service interface {
-	CreateImage(ctx context.Context, name string) (image containerd.Image, err error)
+	ImageService
+	ContainerService
+	TaskService
+}
+
+// ImageService provides methods to interact with containerd Image objects.
+type ImageService interface {
 	PullImage(ctx context.Context, name string) (image containerd.Image, err error)
 	GetImage(ctx context.Context, name string) (img containerd.Image, err error)
 	GetImages(ctx context.Context, filter string) (imgs []containerd.Image, err error)
 	DeleteImage(ctx context.Context, name string) (err error)
+}
 
+// ContainerService provides methods to interact with containerd Container objects.
+type ContainerService interface {
 	CreateContainer(ctx context.Context, imageName, id string) (container containerd.Container, err error)
 	GetContainer(ctx context.Context, id string) (container containerd.Container, err error)
 	GetContainers(ctx context.Context, filter string) (container []containerd.Container, err error)
 	DeleteContainer(ctx context.Context, id string) (err error)
+}
 
+// TaskService provides methods to interact with containerd Task objects.
+// Most operations are relative to their parent Container
+type TaskService interface {
 	CreateTask(ctx context.Context, containerID string) (task containerd.Task, err error)
 	GetTask(ctx context.Context, containerID string) (task containerd.Task, err error)
 	GetTasks(ctx context.Context, filter string) (tasks []containerd.Task, err error)
@@ -50,6 +63,10 @@ func NewNode(ctr *containerd.Client) *Node {
 
 // TaskStatus returns the given containerd.Task's process status as a string.
 func TaskStatus(ctx context.Context, task containerd.Task) (status string) {
+	if task == nil {
+		return ""
+	}
+
 	stats, statsErr := task.Status(ctx)
 
 	if statsErr != nil {
@@ -59,13 +76,12 @@ func TaskStatus(ctx context.Context, task containerd.Task) (status string) {
 	return string(stats.Status)
 }
 
-// CreateImage pulls the given image name. It's made redundant by CreateImage and will be removed.
-// It returns the created containerd.Image.
-func (n Node) CreateImage(ctx context.Context, name string) (image containerd.Image, err error) {
-	image, pullErr := n.Ctr.Pull(ctx, name, containerd.WithPullUnpack)
+// GetImage gets a containerd.Image instance by name.
+func (n Node) GetImage(ctx context.Context, name string) (image containerd.Image, err error) {
+	image, getImageErr := n.Ctr.GetImage(ctx, name)
 
-	if pullErr != nil {
-		return nil, errors.New("Node failed to pull image " + name + " with error: " + pullErr.Error())
+	if getImageErr != nil {
+		return nil, errors.New("GetImage: failed to get image " + name + " with error: " + getImageErr.Error())
 	}
 
 	return image, nil
@@ -79,7 +95,7 @@ func (n Node) CreateContainer(ctx context.Context, imageName, id string) (contai
 		getImageErr, createErr error
 	)
 
-	if image, getImageErr = n.GetImage(ctx, imageName); getImageErr != nil {
+	if image, getImageErr = n.PullImage(ctx, imageName); getImageErr != nil {
 		return nil, errors.New("Node failed to get image " + imageName + " with error: " + getImageErr.Error())
 	}
 
@@ -116,17 +132,6 @@ func (n Node) CreateTask(ctx context.Context, containerID string) (task containe
 	}
 
 	return task, nil
-}
-
-// GetImage gets a containerd.Image instance by name.
-func (n Node) GetImage(ctx context.Context, name string) (image containerd.Image, err error) {
-	image, getImageErr := n.Ctr.GetImage(ctx, name)
-
-	if getImageErr != nil {
-		return nil, errors.New("GetImage: failed to get image " + name + " with error: " + getImageErr.Error())
-	}
-
-	return image, nil
 }
 
 // PullImage pulls the given image ref.
