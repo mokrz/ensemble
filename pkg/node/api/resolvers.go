@@ -4,29 +4,28 @@ import (
 	"context"
 	"errors"
 
-	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/graphql-go/graphql"
 	"github.com/mokrz/clamor/pkg/node"
 )
 
-// Image instances hold metadata for a container image.
+// image holds metadata for a container image.
 // TODO: Add image properties (size, age, etc.).
-type Image struct {
+type image struct {
 	Name string `json:"name"`
 }
 
-// Container instances hold metadata for a container.
+// container holds metadata for a container.
 // TODO: Add container properties (size, age, etc.).
-type Container struct {
+type container struct {
 	ID    string `json:"id"`
-	Image Image  `json:"image"`
-	Task  Task   `json:"task"`
+	Image image  `json:"image"`
+	Task  task   `json:"task"`
 }
 
-// Task instances hold metadata for a container task.
+// task holds metadata for a container task.
 // TODO: Add task properties (PIDs, metrics, etc.).
-type Task struct {
+type task struct {
 	ID          string   `json:"id"`
 	ContainerID string   `json:"container_id"`
 	PID         uint32   `json:"pid"`
@@ -34,9 +33,9 @@ type Task struct {
 	Status      string   `json:"status"`
 }
 
-func getImageInfo(ctx context.Context, image containerd.Image) Image {
-	return Image{
-		Name: image.Name(),
+func getImageInfo(ctx context.Context, i node.Image) image {
+	return image{
+		Name: i.Name(),
 	}
 }
 
@@ -45,7 +44,7 @@ func NewImageResolver(svc node.Service) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, ref           string
-			image                    containerd.Image
+			image                    node.Image
 			namespaceValid, refValid bool
 			getImageErr              error
 		)
@@ -73,7 +72,7 @@ func NewImagesResolver(svc node.Service) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, filter           string
-			images                      []containerd.Image
+			images                      []node.Image
 			namespaceValid, filterValid bool
 			getImagesErr                error
 		)
@@ -95,7 +94,7 @@ func NewImagesResolver(svc node.Service) graphql.FieldResolveFn {
 			return nil, errors.New("images resolver failed with error: " + getImagesErr.Error())
 		}
 
-		var decoratedImages []Image
+		var decoratedImages []image
 		for _, image := range images {
 			decoratedImages = append(decoratedImages, getImageInfo(ctx, image))
 		}
@@ -104,23 +103,28 @@ func NewImagesResolver(svc node.Service) graphql.FieldResolveFn {
 	}
 }
 
-func getContainerInfo(ctx context.Context, container containerd.Container) Container {
+func getContainerInfo(ctx context.Context, c node.Container) container {
 	var (
-		containerTask           containerd.Task
-		containerImage          containerd.Image
+		containerTask           node.Task
+		containerImage          node.Image
 		getTaskErr, getImageErr error
 	)
 
-	if containerImage, getImageErr = container.Image(ctx); getImageErr != nil {
-		return Container{}
+	if containerImage, getImageErr = c.Image(ctx); getImageErr != nil {
+		// This probably won't ever happen
+		return container{}
 	}
 
-	if containerTask, getTaskErr = container.Task(ctx, nil); getTaskErr != nil {
-		return Container{}
+	if containerTask, getTaskErr = c.Task(ctx, nil); getTaskErr != nil {
+		return container{
+			ID:    c.ID(),
+			Image: getImageInfo(ctx, containerImage),
+			Task:  task{},
+		}
 	}
 
-	return Container{
-		ID:    container.ID(),
+	return container{
+		ID:    c.ID(),
 		Image: getImageInfo(ctx, containerImage),
 		Task:  getTaskInfo(ctx, containerTask),
 	}
@@ -131,7 +135,7 @@ func NewContainerResolver(svc node.Service) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, id           string
-			container               containerd.Container
+			container               node.Container
 			namespaceValid, idValid bool
 			getContainerErr         error
 		)
@@ -159,7 +163,7 @@ func NewContainersResolver(svc node.Service) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, filter           string
-			containers                  []containerd.Container
+			containers                  []node.Container
 			namespaceValid, filterValid bool
 			getContainersErr            error
 		)
@@ -181,7 +185,7 @@ func NewContainersResolver(svc node.Service) graphql.FieldResolveFn {
 			return nil, errors.New("containers resolver failed with error: " + getContainersErr.Error())
 		}
 
-		var decoratedContainers []Container
+		var decoratedContainers []container
 		for _, container := range containers {
 			decoratedContainers = append(decoratedContainers, getContainerInfo(ctx, container))
 		}
@@ -190,7 +194,7 @@ func NewContainersResolver(svc node.Service) graphql.FieldResolveFn {
 	}
 }
 
-func getPIDs(s []containerd.ProcessInfo, e error) (ret []uint32) {
+func getPIDs(s []node.ProcessInfo, e error) (ret []uint32) {
 	if e != nil {
 		return
 	}
@@ -200,12 +204,12 @@ func getPIDs(s []containerd.ProcessInfo, e error) (ret []uint32) {
 	return
 }
 
-func getTaskInfo(ctx context.Context, task containerd.Task) Task {
-	return Task{
-		ID:     task.ID(),
-		Status: node.TaskStatus(ctx, task),
-		PIDs:   getPIDs(task.Pids(ctx)),
-		PID:    task.Pid(),
+func getTaskInfo(ctx context.Context, t node.Task) task {
+	return task{
+		ID:     t.ID(),
+		Status: node.TaskStatus(ctx, t),
+		PIDs:   getPIDs(t.Pids(ctx)),
+		PID:    t.Pid(),
 	}
 }
 
@@ -214,7 +218,7 @@ func NewTaskResolver(svc node.Service) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, containerID           string
-			task                             containerd.Task
+			task                             node.Task
 			namespaceValid, containerIDValid bool
 			getTaskErr                       error
 		)
@@ -245,7 +249,7 @@ func NewTasksResolver(svc node.Service) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, filter           string
-			tasks                       []containerd.Task
+			tasks                       []node.Task
 			filterValid, namespaceValid bool
 			getTasksErr                 error
 		)
@@ -267,7 +271,7 @@ func NewTasksResolver(svc node.Service) graphql.FieldResolveFn {
 			return nil, errors.New("containers resolver failed with error: " + getTasksErr.Error())
 		}
 
-		var decoratedTasks []Task
+		var decoratedTasks []task
 		for _, task := range tasks {
 			decoratedTasks = append(decoratedTasks, getTaskInfo(ctx, task))
 		}
@@ -281,7 +285,7 @@ func NewCreateImageResolver(svc node.Service) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, ref           string
-			image                    containerd.Image
+			image                    node.Image
 			namespaceValid, refValid bool
 			imagePullErr             error
 		)
@@ -309,7 +313,7 @@ func NewCreateContainerResolver(sp node.Service) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, ID, imageName                string
-			container                               containerd.Container
+			container                               node.Container
 			namespaceValid, imageNameValid, IDValid bool
 			containerCreateErr                      error
 		)
@@ -342,7 +346,7 @@ func NewCreateTaskResolver(ns node.Service) graphql.FieldResolveFn {
 		var (
 			namespace, containerID           string
 			namespaceValid, containerIDValid bool
-			task                             containerd.Task
+			task                             node.Task
 			createTaskErr                    error
 		)
 
@@ -444,7 +448,7 @@ func NewDeleteTaskResolver(ns node.Service) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, containerID           string
-			exitStatus                       *containerd.ExitStatus
+			exitStatus                       node.ExitStatus
 			namespaceValid, containerIDValid bool
 			deleteTaskErr                    error
 		)
