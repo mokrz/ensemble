@@ -9,23 +9,23 @@ import (
 	"github.com/mokrz/clamor/pkg/node"
 )
 
-// image holds metadata for a container image.
+// Image holds metadata for a container image.
 // TODO: Add image properties (size, age, etc.).
-type image struct {
+type Image struct {
 	Name string `json:"name"`
 }
 
-// container holds metadata for a container.
+// Container holds metadata for a container.
 // TODO: Add container properties (size, age, etc.).
-type container struct {
+type Container struct {
 	ID    string `json:"id"`
-	Image image  `json:"image"`
-	Task  task   `json:"task"`
+	Image Image  `json:"image"`
+	Task  Task   `json:"task"`
 }
 
-// task holds metadata for a container task.
+// Task holds metadata for a container task.
 // TODO: Add task properties (PIDs, metrics, etc.).
-type task struct {
+type Task struct {
 	ID          string   `json:"id"`
 	ContainerID string   `json:"container_id"`
 	PID         uint32   `json:"pid"`
@@ -33,14 +33,14 @@ type task struct {
 	Status      string   `json:"status"`
 }
 
-func getImageInfo(ctx context.Context, i node.Image) image {
-	return image{
+func getImageInfo(ctx context.Context, i node.Image) Image {
+	return Image{
 		Name: i.Name(),
 	}
 }
 
 // NewImageResolver returns a graphql resolver that looks up the given image name in the given namespace
-func NewImageResolver(svc node.Service) graphql.FieldResolveFn {
+func NewImageResolver(svc node.ImageService) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, ref           string
@@ -68,7 +68,7 @@ func NewImageResolver(svc node.Service) graphql.FieldResolveFn {
 }
 
 // NewImagesResolver returns a graphql resolver that looks up all images in the given namespace
-func NewImagesResolver(svc node.Service) graphql.FieldResolveFn {
+func NewImagesResolver(svc node.ImageService) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, filter           string
@@ -94,7 +94,7 @@ func NewImagesResolver(svc node.Service) graphql.FieldResolveFn {
 			return nil, errors.New("images resolver failed with error: " + getImagesErr.Error())
 		}
 
-		var decoratedImages []image
+		var decoratedImages []Image
 		for _, image := range images {
 			decoratedImages = append(decoratedImages, getImageInfo(ctx, image))
 		}
@@ -103,7 +103,7 @@ func NewImagesResolver(svc node.Service) graphql.FieldResolveFn {
 	}
 }
 
-func getContainerInfo(ctx context.Context, c node.Container) container {
+func getContainerInfo(ctx context.Context, c node.Container) Container {
 	var (
 		containerTask           node.Task
 		containerImage          node.Image
@@ -112,18 +112,18 @@ func getContainerInfo(ctx context.Context, c node.Container) container {
 
 	if containerImage, getImageErr = c.Image(ctx); getImageErr != nil {
 		// This probably won't ever happen
-		return container{}
+		return Container{}
 	}
 
 	if containerTask, getTaskErr = c.Task(ctx, nil); getTaskErr != nil {
-		return container{
+		return Container{
 			ID:    c.ID(),
 			Image: getImageInfo(ctx, containerImage),
-			Task:  task{},
+			Task:  Task{},
 		}
 	}
 
-	return container{
+	return Container{
 		ID:    c.ID(),
 		Image: getImageInfo(ctx, containerImage),
 		Task:  getTaskInfo(ctx, containerTask),
@@ -131,7 +131,7 @@ func getContainerInfo(ctx context.Context, c node.Container) container {
 }
 
 // NewContainerResolver returns a graphql resolver that looks up the given container ID in the given namespace
-func NewContainerResolver(svc node.Service) graphql.FieldResolveFn {
+func NewContainerResolver(svc node.ContainerService) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, id           string
@@ -159,7 +159,7 @@ func NewContainerResolver(svc node.Service) graphql.FieldResolveFn {
 }
 
 // NewContainersResolver returns a graphql resolver that looks up all containers in the given namespace
-func NewContainersResolver(svc node.Service) graphql.FieldResolveFn {
+func NewContainersResolver(svc node.ContainerService) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, filter           string
@@ -185,7 +185,7 @@ func NewContainersResolver(svc node.Service) graphql.FieldResolveFn {
 			return nil, errors.New("containers resolver failed with error: " + getContainersErr.Error())
 		}
 
-		var decoratedContainers []container
+		var decoratedContainers []Container
 		for _, container := range containers {
 			decoratedContainers = append(decoratedContainers, getContainerInfo(ctx, container))
 		}
@@ -204,8 +204,8 @@ func getPIDs(s []node.ProcessInfo, e error) (ret []uint32) {
 	return
 }
 
-func getTaskInfo(ctx context.Context, t node.Task) task {
-	return task{
+func getTaskInfo(ctx context.Context, t node.Task) Task {
+	return Task{
 		ID:     t.ID(),
 		Status: node.TaskStatus(ctx, t),
 		PIDs:   getPIDs(t.Pids(ctx)),
@@ -214,7 +214,7 @@ func getTaskInfo(ctx context.Context, t node.Task) task {
 }
 
 // NewTaskResolver returns a graphql resolver that looks up the current task for the given container ID in the given namespace
-func NewTaskResolver(svc node.Service) graphql.FieldResolveFn {
+func NewTaskResolver(svc node.TaskService) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, containerID           string
@@ -245,7 +245,7 @@ func NewTaskResolver(svc node.Service) graphql.FieldResolveFn {
 }
 
 // NewTasksResolver returns a graphql resolver that looks up all container tasks in the given namespace
-func NewTasksResolver(svc node.Service) graphql.FieldResolveFn {
+func NewTasksResolver(svc node.TaskService) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, filter           string
@@ -271,7 +271,7 @@ func NewTasksResolver(svc node.Service) graphql.FieldResolveFn {
 			return nil, errors.New("containers resolver failed with error: " + getTasksErr.Error())
 		}
 
-		var decoratedTasks []task
+		var decoratedTasks []Task
 		for _, task := range tasks {
 			decoratedTasks = append(decoratedTasks, getTaskInfo(ctx, task))
 		}
@@ -281,7 +281,7 @@ func NewTasksResolver(svc node.Service) graphql.FieldResolveFn {
 }
 
 // NewCreateImageResolver returns a graphql resolver that creates a container image from the given ref, pulling from remote registries if necessary
-func NewCreateImageResolver(svc node.Service) graphql.FieldResolveFn {
+func NewCreateImageResolver(svc node.ImageService) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, ref           string
@@ -309,7 +309,7 @@ func NewCreateImageResolver(svc node.Service) graphql.FieldResolveFn {
 }
 
 // NewCreateContainerResolver returns a graphql resolver that creates a container with the given ID from the given image
-func NewCreateContainerResolver(sp node.Service) graphql.FieldResolveFn {
+func NewCreateContainerResolver(sp node.ContainerService) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, ID, imageName                string
@@ -341,7 +341,7 @@ func NewCreateContainerResolver(sp node.Service) graphql.FieldResolveFn {
 }
 
 // NewCreateTaskResolver returns a graphql resolver that creates a task with the given ID from the given image
-func NewCreateTaskResolver(ns node.Service) graphql.FieldResolveFn {
+func NewCreateTaskResolver(ns node.TaskService) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, containerID           string
@@ -369,7 +369,7 @@ func NewCreateTaskResolver(ns node.Service) graphql.FieldResolveFn {
 }
 
 // NewKillTaskResolver returns a graphql resolver that kills the task associated with the given container
-func NewKillTaskResolver(ns node.Service) graphql.FieldResolveFn {
+func NewKillTaskResolver(ns node.TaskService) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, containerID           string
@@ -394,7 +394,7 @@ func NewKillTaskResolver(ns node.Service) graphql.FieldResolveFn {
 }
 
 // NewDeleteImageResolver returns a graphql resolver that deletes the given image
-func NewDeleteImageResolver(ns node.Service) graphql.FieldResolveFn {
+func NewDeleteImageResolver(ns node.ImageService) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, ref           string
@@ -419,7 +419,7 @@ func NewDeleteImageResolver(ns node.Service) graphql.FieldResolveFn {
 }
 
 // NewDeleteContainerResolver returns a graphql resolver that deletes the given container
-func NewDeleteContainerResolver(ns node.Service) graphql.FieldResolveFn {
+func NewDeleteContainerResolver(ns node.ContainerService) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, ID           string
@@ -444,7 +444,7 @@ func NewDeleteContainerResolver(ns node.Service) graphql.FieldResolveFn {
 }
 
 // NewDeleteTaskResolver returns a graphql resolver that deletes the given task
-func NewDeleteTaskResolver(ns node.Service) graphql.FieldResolveFn {
+func NewDeleteTaskResolver(ns node.TaskService) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		var (
 			namespace, containerID           string

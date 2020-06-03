@@ -9,7 +9,7 @@ type Image interface {
 	Name() string
 }
 
-func newImage(i containerd.Image) Image {
+func NewImage(i containerd.Image) Image {
 	return &image{
 		ctrImage: i,
 	}
