@@ -100,7 +100,7 @@ func NewContainerService(seedContainers map[string]node.Container) node.Containe
 }
 
 func (cs *containerService) CreateContainer(ctx context.Context, imageName string, id string) (container node.Container, err error) {
-	c := NewContainer(id, NewImage(imageName), nil)
+	c := NewContainer(id, NewImage(imageName), NewTask(id, 1, node.Status{}, nil))
 	cs.containers[id] = c
 	return c, nil
 }
@@ -480,6 +480,280 @@ func TestNewTasksResolver(t *testing.T) {
 						t.Errorf("tasks resolver returned incorrect type")
 					}
 				}
+			}
+		})
+	}
+}
+
+func TestNewCreateImageResolver(t *testing.T) {
+	type resolverArgs struct {
+		resolveParamArgs map[string]interface{}
+	}
+
+	type imageResolverTest struct {
+		name    string
+		args    resolverArgs
+		wantErr bool
+	}
+
+	imageSvc := NewImageService(map[string]node.Image{
+		seedImage: NewImage(seedImage),
+	})
+
+	tests := []imageResolverTest{
+		{name: "empty namespace", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": "", "ref": testImage}}, wantErr: true},
+		{name: "weird namespace", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": weirdString, "ref": testImage}}, wantErr: true},
+		{name: "nil ref", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": testNamespace, "ref": nil}}, wantErr: true},
+		{name: "weird ref", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": testNamespace, "ref": weirdString}}, wantErr: true},
+		{name: "valid namespace valid ref", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": testNamespace, "ref": seedImage}}, wantErr: false},
+	}
+
+	for _, test := range tests {
+
+		t.Run(test.name, func(t *testing.T) {
+			createImageResolver := api.NewCreateImageResolver(imageSvc)
+			i, err := createImageResolver(graphql.ResolveParams{
+				Args: test.args.resolveParamArgs,
+			})
+
+			if err != nil && !test.wantErr {
+				t.Errorf("create image resolver failed with error: " + err.Error())
+			}
+
+			if _, imgValid := i.(api.Image); !imgValid && !test.wantErr {
+				t.Errorf("create image resolver returned incorrect type")
+			}
+		})
+	}
+}
+
+func TestNewCreateContainerResolver(t *testing.T) {
+	type resolverArgs struct {
+		resolveParamArgs map[string]interface{}
+	}
+
+	type createContainerResolverTest struct {
+		name    string
+		args    resolverArgs
+		wantErr bool
+	}
+
+	containerSvc := NewContainerService(map[string]node.Container{
+		testContainerID: NewContainer(testContainerID, NewImage(seedImage), NewTask(testContainerID, 1, node.Status{}, []node.ProcessInfo{})),
+	})
+	tests := []createContainerResolverTest{
+		{name: "empty namespace", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": "", "id": testContainerID, "image_name": testImage}}, wantErr: true},
+		{name: "weird namespace", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": weirdString, "id": testContainerID, "image_name": testImage}}, wantErr: true},
+		{name: "nil container ID", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": testNamespace, "id": nil, "image_name": testImage}}, wantErr: true},
+		{name: "weird container ID", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": testNamespace, "id": weirdString, "image_name": testImage}}, wantErr: true},
+		{name: "nil image name", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": testNamespace, "id": testContainerID, "image_name": nil}}, wantErr: true},
+		{name: "weird image name", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": testNamespace, "id": testContainerID, "image_name": weirdString}}, wantErr: true},
+		{name: "valid namespace valid container ID valid image name", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": testNamespace, "id": testContainerID, "image_name": testImage}}, wantErr: false},
+	}
+
+	for _, test := range tests {
+
+		t.Run(test.name, func(t *testing.T) {
+			containerResolver := api.NewCreateContainerResolver(containerSvc)
+			i, err := containerResolver(graphql.ResolveParams{
+				Args: test.args.resolveParamArgs,
+			})
+
+			if err != nil && !test.wantErr {
+				t.Errorf("create container resolver failed with error: " + err.Error())
+			}
+
+			if _, containerValid := i.(api.Container); !containerValid && !test.wantErr {
+				t.Errorf("create container resolver returned incorrect type")
+			}
+		})
+	}
+}
+
+func TestNewCreateTaskResolver(t *testing.T) {
+	type resolverArgs struct {
+		resolveParamArgs map[string]interface{}
+	}
+
+	type createTaskResolverTest struct {
+		name    string
+		args    resolverArgs
+		wantErr bool
+	}
+
+	taskSvc := NewTaskService(map[string]node.Task{
+		testContainerID: NewTask(testContainerID, 1, node.Status{}, []node.ProcessInfo{}),
+	})
+	tests := []createTaskResolverTest{
+		{name: "empty namespace", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": "", "container_id": testContainerID}}, wantErr: true},
+		{name: "weird namespace", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": weirdString, "container_id": testContainerID}}, wantErr: true},
+		{name: "nil container ID", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": testNamespace, "container_id": nil}}, wantErr: true},
+		{name: "weird container ID", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": testNamespace, "container_id": weirdString}}, wantErr: true},
+		{name: "valid namespace valid container ID", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": testNamespace, "container_id": testContainerID}}, wantErr: false},
+	}
+
+	for _, test := range tests {
+
+		t.Run(test.name, func(t *testing.T) {
+			createTaskResolver := api.NewCreateTaskResolver(taskSvc)
+			i, err := createTaskResolver(graphql.ResolveParams{
+				Args: test.args.resolveParamArgs,
+			})
+
+			if err != nil && !test.wantErr {
+				t.Errorf("create task resolver failed with error: " + err.Error())
+			}
+
+			if _, taskValid := i.(api.Task); !taskValid && !test.wantErr {
+				t.Errorf("create task resolver returned incorrect type")
+			}
+		})
+	}
+}
+
+func TestNewKillTaskResolver(t *testing.T) {
+	type resolverArgs struct {
+		resolveParamArgs map[string]interface{}
+	}
+
+	type killTaskResolverTest struct {
+		name    string
+		args    resolverArgs
+		wantErr bool
+	}
+
+	taskSvc := NewTaskService(map[string]node.Task{
+		testContainerID: NewTask(testContainerID, 1, node.Status{}, []node.ProcessInfo{}),
+	})
+	tests := []killTaskResolverTest{
+		{name: "empty namespace", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": "", "container_id": testContainerID}}, wantErr: true},
+		{name: "weird namespace", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": weirdString, "container_id": testContainerID}}, wantErr: true},
+		{name: "nil container ID", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": testNamespace, "container_id": nil}}, wantErr: true},
+		{name: "weird container ID", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": testNamespace, "container_id": weirdString}}, wantErr: true},
+		{name: "valid namespace valid container ID", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": testNamespace, "container_id": testContainerID}}, wantErr: false},
+	}
+
+	for _, test := range tests {
+
+		t.Run(test.name, func(t *testing.T) {
+			killTaskResolver := api.NewKillTaskResolver(taskSvc)
+			_, err := killTaskResolver(graphql.ResolveParams{
+				Args: test.args.resolveParamArgs,
+			})
+
+			if err != nil && !test.wantErr {
+				t.Errorf("kill task resolver failed with error: " + err.Error())
+			}
+		})
+	}
+}
+
+func TestNewDeleteTaskResolver(t *testing.T) {
+	type resolverArgs struct {
+		resolveParamArgs map[string]interface{}
+	}
+
+	type deleteTaskResolverTest struct {
+		name    string
+		args    resolverArgs
+		wantErr bool
+	}
+
+	taskSvc := NewTaskService(map[string]node.Task{
+		testContainerID: NewTask(testContainerID, 1, node.Status{}, []node.ProcessInfo{}),
+	})
+	tests := []deleteTaskResolverTest{
+		{name: "empty namespace", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": "", "container_id": testContainerID}}, wantErr: true},
+		{name: "weird namespace", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": weirdString, "container_id": testContainerID}}, wantErr: true},
+		{name: "nil container ID", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": testNamespace, "container_id": nil}}, wantErr: true},
+		{name: "weird container ID", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": testNamespace, "container_id": weirdString}}, wantErr: true},
+		{name: "valid namespace valid container ID", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": testNamespace, "container_id": testContainerID}}, wantErr: false},
+	}
+
+	for _, test := range tests {
+
+		t.Run(test.name, func(t *testing.T) {
+			deleteTaskResolver := api.NewDeleteTaskResolver(taskSvc)
+			_, err := deleteTaskResolver(graphql.ResolveParams{
+				Args: test.args.resolveParamArgs,
+			})
+
+			if err != nil && !test.wantErr {
+				t.Errorf("delete task resolver failed with error: " + err.Error())
+			}
+		})
+	}
+}
+
+func TestNewDeleteContainerResolver(t *testing.T) {
+	type resolverArgs struct {
+		resolveParamArgs map[string]interface{}
+	}
+
+	type deleteContainerResolverTest struct {
+		name    string
+		args    resolverArgs
+		wantErr bool
+	}
+
+	containerSvc := NewContainerService(map[string]node.Container{
+		testContainerID: NewContainer(testContainerID, NewImage(seedImage), NewTask(testContainerID, 1, node.Status{}, []node.ProcessInfo{})),
+	})
+	tests := []deleteContainerResolverTest{
+		{name: "empty namespace", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": "", "id": testContainerID}}, wantErr: true},
+		{name: "weird namespace", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": weirdString, "id": testContainerID}}, wantErr: true},
+		{name: "nil container ID", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": testNamespace, "id": nil}}, wantErr: true},
+		{name: "weird container ID", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": testNamespace, "id": weirdString}}, wantErr: true},
+		{name: "valid namespace valid container ID", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": testNamespace, "id": testContainerID}}, wantErr: false},
+	}
+
+	for _, test := range tests {
+
+		t.Run(test.name, func(t *testing.T) {
+			deleteContainerResolver := api.NewDeleteContainerResolver(containerSvc)
+			_, err := deleteContainerResolver(graphql.ResolveParams{
+				Args: test.args.resolveParamArgs,
+			})
+
+			if err != nil && !test.wantErr {
+				t.Errorf("delete container resolver failed with error: " + err.Error())
+			}
+		})
+	}
+}
+
+func TestNewDeleteImageResolver(t *testing.T) {
+	type resolverArgs struct {
+		resolveParamArgs map[string]interface{}
+	}
+
+	type deleteContainerResolverTest struct {
+		name    string
+		args    resolverArgs
+		wantErr bool
+	}
+
+	imageSvc := NewImageService(map[string]node.Image{
+		seedImage: NewImage(seedImage),
+	})
+	tests := []deleteContainerResolverTest{
+		{name: "empty namespace", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": "", "ref": seedImage}}, wantErr: true},
+		{name: "weird namespace", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": weirdString, "ref": seedImage}}, wantErr: true},
+		{name: "nil image name", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": testNamespace, "ref": nil}}, wantErr: true},
+		{name: "weird image name", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": testNamespace, "ref": weirdString}}, wantErr: true},
+		{name: "valid namespace valid container ID", args: resolverArgs{resolveParamArgs: map[string]interface{}{"namespace": testNamespace, "ref": seedImage}}, wantErr: false},
+	}
+
+	for _, test := range tests {
+
+		t.Run(test.name, func(t *testing.T) {
+			deleteImageResolver := api.NewDeleteImageResolver(imageSvc)
+			_, err := deleteImageResolver(graphql.ResolveParams{
+				Args: test.args.resolveParamArgs,
+			})
+
+			if err != nil && !test.wantErr {
+				t.Errorf("delete image resolver failed with error: " + err.Error())
 			}
 		})
 	}
