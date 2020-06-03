@@ -318,16 +318,25 @@ func NewCreateContainerResolver(sp node.ContainerService) graphql.FieldResolveFn
 			containerCreateErr                      error
 		)
 
-		if namespace, namespaceValid = p.Args["namespace"].(string); !namespaceValid {
-			return nil, errors.New("invalid request")
+		if p.Args["namespace"] != nil {
+
+			if namespace, namespaceValid = p.Args["namespace"].(string); !namespaceValid {
+				return nil, errors.New("invalid request")
+			}
 		}
 
-		if imageName, imageNameValid = p.Args["image_name"].(string); !imageNameValid {
-			return nil, errors.New("invalid request")
+		if p.Args["image_name"] != nil {
+
+			if imageName, imageNameValid = p.Args["image_name"].(string); !imageNameValid {
+				return nil, errors.New("invalid request")
+			}
 		}
 
-		if ID, IDValid = p.Args["id"].(string); !IDValid {
-			return nil, errors.New("invalid request")
+		if p.Args["id"] != nil {
+
+			if ID, IDValid = p.Args["id"].(string); !IDValid {
+				return nil, errors.New("invalid request")
+			}
 		}
 
 		ctx := namespaces.WithNamespace(context.Background(), namespace)
@@ -350,12 +359,18 @@ func NewCreateTaskResolver(ns node.TaskService) graphql.FieldResolveFn {
 			createTaskErr                    error
 		)
 
-		if namespace, namespaceValid = p.Args["namespace"].(string); !namespaceValid {
-			return nil, errors.New("invalid request")
+		if p.Args["namespace"] != nil {
+
+			if namespace, namespaceValid = p.Args["namespace"].(string); !namespaceValid {
+				return nil, errors.New("invalid request")
+			}
 		}
 
-		if containerID, containerIDValid = p.Args["container_id"].(string); !containerIDValid {
-			return nil, errors.New("invalid request")
+		if p.Args["container_id"] != nil {
+
+			if containerID, containerIDValid = p.Args["container_id"].(string); !containerIDValid {
+				return nil, errors.New("invalid request")
+			}
 		}
 
 		ctx := namespaces.WithNamespace(context.Background(), namespace)
@@ -377,12 +392,18 @@ func NewKillTaskResolver(ns node.TaskService) graphql.FieldResolveFn {
 			killTaskErr                      error
 		)
 
-		if namespace, namespaceValid = p.Args["namespace"].(string); !namespaceValid {
-			return nil, errors.New("invalid request")
+		if p.Args["namespace"] != nil {
+
+			if namespace, namespaceValid = p.Args["namespace"].(string); !namespaceValid {
+				return nil, errors.New("invalid request")
+			}
 		}
 
-		if containerID, containerIDValid = p.Args["container_id"].(string); !containerIDValid {
-			return nil, errors.New("invalid request")
+		if p.Args["container_id"] != nil {
+
+			if containerID, containerIDValid = p.Args["container_id"].(string); !containerIDValid {
+				return nil, errors.New("invalid request")
+			}
 		}
 
 		if killTaskErr = ns.KillTask(namespaces.WithNamespace(context.Background(), namespace), containerID); killTaskErr != nil {
@@ -402,12 +423,18 @@ func NewDeleteImageResolver(ns node.ImageService) graphql.FieldResolveFn {
 			deleteImageErr           error
 		)
 
-		if namespace, namespaceValid = p.Args["namespace"].(string); !namespaceValid {
-			return nil, errors.New("invalid request")
+		if p.Args["namespace"] != nil {
+
+			if namespace, namespaceValid = p.Args["namespace"].(string); !namespaceValid {
+				return nil, errors.New("invalid request")
+			}
 		}
 
-		if ref, refValid = p.Args["ref"].(string); !refValid {
-			return nil, errors.New("invalid request")
+		if p.Args["ref"] != nil {
+
+			if ref, refValid = p.Args["ref"].(string); !refValid {
+				return nil, errors.New("invalid request")
+			}
 		}
 
 		if deleteImageErr = ns.DeleteImage(namespaces.WithNamespace(context.Background(), namespace), ref); deleteImageErr != nil {
@@ -427,12 +454,18 @@ func NewDeleteContainerResolver(ns node.ContainerService) graphql.FieldResolveFn
 			deleteContainerErr      error
 		)
 
-		if namespace, namespaceValid = p.Args["namespace"].(string); !namespaceValid {
-			return nil, errors.New("invalid request")
+		if p.Args["namespace"] != nil {
+
+			if namespace, namespaceValid = p.Args["namespace"].(string); !namespaceValid {
+				return nil, errors.New("invalid request")
+			}
 		}
 
-		if ID, IDValid = p.Args["id"].(string); !IDValid {
-			return nil, errors.New("invalid request")
+		if p.Args["id"] != nil {
+
+			if ID, IDValid = p.Args["id"].(string); !IDValid {
+				return nil, errors.New("invalid request")
+			}
 		}
 
 		if deleteContainerErr = ns.DeleteContainer(namespaces.WithNamespace(context.Background(), namespace), ID); deleteContainerErr != nil {
@@ -453,12 +486,18 @@ func NewDeleteTaskResolver(ns node.TaskService) graphql.FieldResolveFn {
 			deleteTaskErr                    error
 		)
 
-		if namespace, namespaceValid = p.Args["namespace"].(string); !namespaceValid {
-			return nil, errors.New("invalid request")
+		if p.Args["namespace"] != nil {
+
+			if namespace, namespaceValid = p.Args["namespace"].(string); !namespaceValid {
+				return nil, errors.New("invalid request")
+			}
 		}
 
-		if containerID, containerIDValid = p.Args["container_id"].(string); !containerIDValid {
-			return nil, errors.New("invalid request")
+		if p.Args["container_id"] != nil {
+
+			if containerID, containerIDValid = p.Args["container_id"].(string); !containerIDValid {
+				return nil, errors.New("invalid request")
+			}
 		}
 
 		if exitStatus, deleteTaskErr = ns.DeleteTask(namespaces.WithNamespace(context.Background(), namespace), containerID); deleteTaskErr != nil {
