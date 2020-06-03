@@ -78,7 +78,7 @@ func TaskStatus(ctx context.Context, task Task) (status string) {
 // GetImage gets a containerd.Image instance by name.
 func (n Node) GetImage(ctx context.Context, name string) (i Image, err error) {
 	image, err := n.getImage(ctx, name)
-	return NewImage(image), err
+	return newImage(image), err
 }
 
 func (n Node) getImage(ctx context.Context, name string) (i containerd.Image, err error) {
@@ -144,7 +144,7 @@ func (n Node) CreateTask(ctx context.Context, containerID string) (t Task, err e
 // It returns the created containerd.Image.
 func (n Node) PullImage(ctx context.Context, ref string) (i Image, err error) {
 	image, err := n.pullImage(ctx, ref)
-	return NewImage(image), err
+	return newImage(image), err
 }
 
 func (n Node) pullImage(ctx context.Context, ref string) (image containerd.Image, err error) {
@@ -166,7 +166,7 @@ func (n Node) GetImages(ctx context.Context, filter string) (images []Image, err
 	}
 
 	for _, i := range imgs {
-		images = append(images, NewImage(i))
+		images = append(images, newImage(i))
 	}
 
 	return images, nil
