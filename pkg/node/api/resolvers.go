@@ -325,9 +325,9 @@ func NewCreateContainerResolver(sp node.ContainerService) graphql.FieldResolveFn
 			}
 		}
 
-		if p.Args["image_name"] != nil {
+		if p.Args["image"] != nil {
 
-			if imageName, imageNameValid = p.Args["image_name"].(string); !imageNameValid {
+			if imageName, imageNameValid = p.Args["image"].(string); !imageNameValid {
 				return nil, errors.New("invalid request")
 			}
 		}

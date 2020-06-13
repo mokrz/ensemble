@@ -100,7 +100,7 @@ func (n Node) CreateContainer(ctx context.Context, imageName, id string) (c Cont
 		getImageErr, createErr error
 	)
 
-	if image, getImageErr = n.pullImage(ctx, imageName); getImageErr != nil {
+	if image, getImageErr = n.getImage(ctx, imageName); getImageErr != nil {
 		return nil, errors.New("Node failed to get image " + imageName + " with error: " + getImageErr.Error())
 	}
 
@@ -143,12 +143,17 @@ func (n Node) CreateTask(ctx context.Context, containerID string) (t Task, err e
 // PullImage pulls the given image ref.
 // It returns the created containerd.Image.
 func (n Node) PullImage(ctx context.Context, ref string) (i Image, err error) {
-	image, err := n.pullImage(ctx, ref)
-	return newImage(image), err
+	var img containerd.Image
+
+	if img, err = n.pullImage(ctx, ref); err != nil {
+		return nil, err
+	}
+
+	return newImage(img), nil
 }
 
 func (n Node) pullImage(ctx context.Context, ref string) (image containerd.Image, err error) {
-	image, pullImageErr := n.Ctr.Pull(ctx, ref)
+	image, pullImageErr := n.Ctr.Pull(ctx, ref, containerd.WithPullUnpack)
 
 	if pullImageErr != nil {
 		return nil, errors.New("PullImage: failed to pull image ref " + ref + " with error: " + pullImageErr.Error())
