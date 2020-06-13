@@ -7,8 +7,8 @@ import (
 
 	"github.com/containerd/containerd/cio"
 	"github.com/graphql-go/graphql"
-	"github.com/mokrz/clamor/pkg/node"
-	"github.com/mokrz/clamor/pkg/node/api"
+	"github.com/mokrz/clamor/node"
+	"github.com/mokrz/clamor/node/api"
 )
 
 type image struct {
