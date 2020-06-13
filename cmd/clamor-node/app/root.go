@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"github.com/containerd/containerd"
-	"github.com/mokrz/clamor/pkg/node"
-	node_api "github.com/mokrz/clamor/pkg/node/api"
+	"github.com/mokrz/clamor/node"
+	node_api "github.com/mokrz/clamor/node/api"
 )
 
 // Execute runs the root clamor-node logic.

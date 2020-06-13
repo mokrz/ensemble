@@ -2,7 +2,7 @@ package api
 
 import (
 	"github.com/graphql-go/graphql"
-	"github.com/mokrz/clamor/pkg/node"
+	"github.com/mokrz/clamor/node"
 )
 
 var imageType = graphql.NewObject(graphql.ObjectConfig{

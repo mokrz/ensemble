@@ -11,7 +11,7 @@ import (
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
-	"github.com/mokrz/clamor/pkg/node"
+	"github.com/mokrz/clamor/node"
 )
 
 var (

@@ -2,7 +2,7 @@ package api
 
 import (
 	"github.com/graphql-go/graphql"
-	"github.com/mokrz/clamor/pkg/node"
+	"github.com/mokrz/clamor/node"
 )
 
 // NewGraphQLSchema returns a new graphql schema instance containing root Query and root Mutation types.

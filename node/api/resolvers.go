@@ -6,7 +6,7 @@ import (
 
 	"github.com/containerd/containerd/namespaces"
 	"github.com/graphql-go/graphql"
-	"github.com/mokrz/clamor/pkg/node"
+	"github.com/mokrz/clamor/node"
 )
 
 // Image holds metadata for a container image.
