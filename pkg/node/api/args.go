@@ -72,7 +72,7 @@ var createContainerArgs = graphql.FieldConfigArgument{
 	"id": &graphql.ArgumentConfig{
 		Type: graphql.String,
 	},
-	"image_ref": &graphql.ArgumentConfig{
+	"image": &graphql.ArgumentConfig{
 		Type: graphql.String,
 	},
 	"namespace": &graphql.ArgumentConfig{
