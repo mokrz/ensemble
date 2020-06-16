@@ -20,7 +20,7 @@ jobs:
     - name: Install/start containerd
       run: |
         sudo sh -c 'tar -xvz -f /tmp/containerd-1.3.4.linux-amd64.tar.gz -C /usr/local/ && mkdir -p /etc/containerd/ && containerd config default > /etc/containerd/config.toml was && chmod +x /usr/local/bin/containerd* /usr/local/bin/ctr'
-        sudo containerd &
+        sudo containerd &> /tmp/containerd.log &
     
     - name: Checkout
       uses: actions/checkout@v2
@@ -32,3 +32,12 @@ jobs:
       run: |
         sudo go test -v ./...
 
+    - name: Output containerd info and logs on failure
+      if: ${{ failure() }}
+      run: |
+        sudo ctr ns ls
+        sudo ctr -n clamor-testing i ls
+        sudo ctr -n clamor-testing c ls
+        sudo ctr -n clamor-testing snapshot ls
+        sudo ctr -n clamor-testing t ls
+        sudo cat /tmp/containerd.log
