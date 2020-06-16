@@ -1,12 +1,12 @@
 ---
-name: Testin
+name: Test
 on:
   pull_request:
     branches: [ master ]
 
 jobs:
   test:
-    name: Testan
+    name: Install containerd; run go test
     runs-on: ubuntu-latest
     steps:
     - name: Install Go
