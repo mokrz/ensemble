@@ -257,17 +257,24 @@ func (n Node) GetTasks(ctx context.Context, filter string) (tasks []Task, err er
 // TODO: Accept other process signals.
 func (n Node) KillTask(ctx context.Context, containerID string) (err error) {
 	var (
-		task                    containerd.Task
-		getTaskErr, killTaskErr error
+		task                             containerd.Task
+		es                               <-chan containerd.ExitStatus
+		getTaskErr, waitErr, killTaskErr error
 	)
 
 	if task, getTaskErr = n.getTask(ctx, containerID); getTaskErr != nil {
 		return errors.New("KillTask: failed to get container " + containerID + " with error: " + getTaskErr.Error())
 	}
+	
+	if es, waitErr = task.Wait(ctx); waitErr != nil {
+		return errors.New("KillTask: failed get task exit status channel with error:" + waitErr.Error())
+	}
 
 	if killTaskErr = task.Kill(ctx, syscall.SIGKILL); killTaskErr != nil {
 		return errors.New("KillTask: failed to kill task for container " + containerID + " with error: " + killTaskErr.Error())
 	}
+	
+	<-es
 
 	return nil
 }

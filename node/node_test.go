@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
 	"syscall"
 	"testing"
 
@@ -219,7 +220,6 @@ func TestCreateTask(t *testing.T) {
 			ctx := namespaces.WithNamespace(context.TODO(), test.args.namespace)
 
 			if tsk, err := node.CreateTask(ctx, test.args.containerID); err != nil && !test.wantErr {
-				ctrd.deleteContainer(ctx, test.args.containerID)
 				t.Errorf("node.CreateTask failed with error: %s", err.Error())
 			} else if tsk != nil {
 				ctrd.killTask(ctx, tsk.ID())
@@ -316,13 +316,17 @@ func TestDeleteTask(t *testing.T) {
 	}
 
 	node := node.NewNode(ctrd.client)
+	ctx := namespaces.WithNamespace(context.TODO(), testNamespace)
+	containerID := testContainerID + randString(8)
 
-	_, createContainerErr := ctrd.createContainer(namespaces.WithNamespace(context.TODO(), testNamespace), testImage, testContainerID)
+	_, createContainerErr := ctrd.createContainer(ctx, testImage, containerID)
 
 	if createContainerErr != nil {
-		t.Errorf("failed to create containerd client with error: %s", createContainerErr.Error())
+		t.Errorf("failed to create container with error: %s", createContainerErr.Error())
 	}
 
+	defer ctrd.deleteContainer(ctx, containerID)
+	
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			ctx := namespaces.WithNamespace(context.TODO(), test.args.namespace)
@@ -420,6 +424,17 @@ func TestDeleteImage(t *testing.T) {
 	}
 }
 
+func randString(n int) string {
+	letterRunes := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	b := make([]rune, n)
+
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+
+	return string(b)
+}
+
 // ctrd is similar to the containerd interaction provided by node.Service methods, but it's meant to be a simpler implementation that's easier to trust.
 // node.Service tests should use these methods to create SUT dependencies instead of whatever their closest node.Service relative is.
 // e.g. A test for node.CreateTask could use the below ctrd.createContainer method to populate the containerd daemon with the required container prior to task creation.
@@ -496,7 +511,7 @@ func (c *ctrd) deleteContainer(ctx context.Context, id string) error {
 	if container, containerErr = c.client.LoadContainer(ctx, id); containerErr != nil {
 		return fmt.Errorf("failed to load container with error: %s", containerErr.Error())
 	}
-
+	
 	return container.Delete(ctx, containerd.WithSnapshotCleanup)
 }
 
@@ -520,17 +535,24 @@ func (c *ctrd) createTask(ctx context.Context, containerID string) (containerd.T
 
 func (c *ctrd) killTask(ctx context.Context, containerID string) error {
 	var (
-		task                    containerd.Task
-		getTaskErr, killTaskErr error
+		task                             containerd.Task
+		es                               <-chan containerd.ExitStatus
+		getTaskErr, waitErr, killTaskErr error
 	)
 
 	if task, getTaskErr = c.getTask(ctx, containerID); getTaskErr != nil {
 		return fmt.Errorf("failed to get container with error: %s", getTaskErr.Error())
 	}
 
+	if es, waitErr = task.Wait(ctx); waitErr != nil {
+		return fmt.Errorf("failed get task exit status channel with error: %s", waitErr.Error())
+	}
+
 	if killTaskErr = task.Kill(ctx, syscall.SIGKILL); killTaskErr != nil {
 		return fmt.Errorf("failed to kill task for container %s with error: %s", containerID, killTaskErr.Error())
 	}
+
+	<-es
 
 	return killTaskErr
 }
