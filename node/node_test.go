@@ -303,7 +303,7 @@ func TestDeleteTask(t *testing.T) {
 	containerID := testContainerID + randString(8)
 	tests := []test{
 		{name: "empty namespace", args: testArguments{namespace: "", containerID: containerID}, wantErr: true},
-                {name: "weird namespace", args: testArguments{namespace: weirdString, containerID: containerID}, wantErr: true},
+		{name: "weird namespace", args: testArguments{namespace: weirdString, containerID: containerID}, wantErr: true},
 		{name: "empty container ID", args: testArguments{namespace: testNamespace, containerID: ""}, wantErr: true},
 		{name: "weird container ID", args: testArguments{namespace: testNamespace, containerID: weirdString}, wantErr: true},
 		{name: "valid namespace valid container ID", args: testArguments{namespace: testNamespace, containerID: containerID}, wantErr: false},
@@ -326,12 +326,12 @@ func TestDeleteTask(t *testing.T) {
 	}
 
 	defer ctrd.deleteContainer(ctx, containerID)
-	
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			ctx := namespaces.WithNamespace(context.TODO(), test.args.namespace)
 			ctrd.createTask(ctx, containerID)
-                        ctrd.killTask(ctx, containerID)
+			ctrd.killTask(ctx, containerID)
 			_, err := node.DeleteTask(ctx, test.args.containerID)
 
 			if err != nil && !test.wantErr {
@@ -511,7 +511,7 @@ func (c *ctrd) deleteContainer(ctx context.Context, id string) error {
 	if container, containerErr = c.client.LoadContainer(ctx, id); containerErr != nil {
 		return fmt.Errorf("failed to load container with error: %s", containerErr.Error())
 	}
-	
+
 	return container.Delete(ctx, containerd.WithSnapshotCleanup)
 }
 
