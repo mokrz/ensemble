@@ -300,12 +300,13 @@ func TestDeleteTask(t *testing.T) {
 		wantErr, wantImg bool
 	}
 
+	containerID := testContainerID + randString(8)
 	tests := []test{
-		{name: "empty namespace", args: testArguments{namespace: "", containerID: testContainerID}, wantErr: true},
-		{name: "weird namespace", args: testArguments{namespace: weirdString, containerID: testContainerID}, wantErr: true},
+		{name: "empty namespace", args: testArguments{namespace: "", containerID: containerID}, wantErr: true},
+                {name: "weird namespace", args: testArguments{namespace: weirdString, containerID: containerID}, wantErr: true},
 		{name: "empty container ID", args: testArguments{namespace: testNamespace, containerID: ""}, wantErr: true},
 		{name: "weird container ID", args: testArguments{namespace: testNamespace, containerID: weirdString}, wantErr: true},
-		{name: "valid namespace valid container ID", args: testArguments{namespace: testNamespace, containerID: testContainerID}, wantErr: false},
+		{name: "valid namespace valid container ID", args: testArguments{namespace: testNamespace, containerID: containerID}, wantErr: false},
 	}
 
 	ctrd, ctrdErr := newCtrd(containerdSock)
@@ -317,7 +318,6 @@ func TestDeleteTask(t *testing.T) {
 
 	node := node.NewNode(ctrd.client)
 	ctx := namespaces.WithNamespace(context.TODO(), testNamespace)
-	containerID := testContainerID + randString(8)
 
 	_, createContainerErr := ctrd.createContainer(ctx, testImage, containerID)
 
@@ -330,8 +330,8 @@ func TestDeleteTask(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			ctx := namespaces.WithNamespace(context.TODO(), test.args.namespace)
-			ctrd.createTask(ctx, testContainerID)
-			ctrd.killTask(ctx, testContainerID)
+			ctrd.createTask(ctx, containerID)
+                        ctrd.killTask(ctx, containerID)
 			_, err := node.DeleteTask(ctx, test.args.containerID)
 
 			if err != nil && !test.wantErr {
