@@ -9,6 +9,42 @@ import (
 	"github.com/mokrz/clamor/node"
 )
 
+// ResolverSet groups all the graphql.FieldResolveFn instances together.
+type ResolverSet struct {
+	CreateImageResolver,
+	ImageResolver,
+	ImagesResolver,
+	DeleteImageResolver,
+	CreateContainerResolver,
+	ContainerResolver,
+	ContainersResolver,
+	DeleteContainerResolver,
+	CreateTaskResolver,
+	TaskResolver,
+	TasksResolver,
+	DeleteTaskResolver,
+	KillTaskResolver graphql.FieldResolveFn
+}
+
+// NewResolverSet creates ResolverSet methods. The created resolvers interact with the node via the given node.Service implementation.
+func NewResolverSet(svc node.Service) *ResolverSet {
+	return &ResolverSet{
+		CreateImageResolver:     NewCreateImageResolver(svc),
+		ImageResolver:           NewImageResolver(svc),
+		ImagesResolver:          NewImagesResolver(svc),
+		DeleteImageResolver:     NewDeleteImageResolver(svc),
+		CreateContainerResolver: NewCreateContainerResolver(svc),
+		ContainerResolver:       NewContainerResolver(svc),
+		ContainersResolver:      NewContainersResolver(svc),
+		DeleteContainerResolver: NewDeleteContainerResolver(svc),
+		CreateTaskResolver:      NewCreateTaskResolver(svc),
+		TaskResolver:            NewTaskResolver(svc),
+		TasksResolver:           NewTasksResolver(svc),
+		DeleteTaskResolver:      NewDeleteTaskResolver(svc),
+		KillTaskResolver:        NewKillTaskResolver(svc),
+	}
+}
+
 // Image holds metadata for a container image.
 // TODO: Add image properties (size, age, etc.).
 type Image struct {

@@ -6,8 +6,11 @@ import (
 	"strconv"
 
 	"github.com/containerd/containerd"
+	"github.com/mokrz/clamor/log"
 	"github.com/mokrz/clamor/node"
+	"github.com/mokrz/clamor/node/api"
 	node_api "github.com/mokrz/clamor/node/api"
+	"go.uber.org/zap"
 )
 
 // Execute runs the root clamor-node logic.
@@ -39,8 +42,16 @@ func Execute() {
 
 	defer ctr.Close()
 
+	logger, _ := zap.NewProduction()
+	defer logger.Sync()
+
 	nodeSvc := node.NewNode(ctr)
-	gqlSchema, gqlSchemaErr := node_api.NewGraphQLSchema(nodeSvc)
+
+	var resolverSet *api.ResolverSet
+	resolverSet = api.NewResolverSet(nodeSvc)
+	resolverSet = log.NewLoggingResolverSet(logger, resolverSet)
+
+	gqlSchema, gqlSchemaErr := node_api.NewGraphQLSchema(nodeSvc, resolverSet)
 
 	if gqlSchemaErr != nil {
 		fmt.Printf("node_api.NewGraphQLSchema failed with error: %s\n", gqlSchemaErr.Error())
