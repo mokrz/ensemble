@@ -54,7 +54,7 @@ type TaskService interface {
 }
 
 // NewNode returns Node instances.
-func NewNode(ctr *containerd.Client) *Node {
+func NewNode(ctr *containerd.Client) Service {
 	return &Node{
 		Ctr: ctr,
 	}
@@ -265,7 +265,7 @@ func (n Node) KillTask(ctx context.Context, containerID string) (err error) {
 	if task, getTaskErr = n.getTask(ctx, containerID); getTaskErr != nil {
 		return errors.New("KillTask: failed to get container " + containerID + " with error: " + getTaskErr.Error())
 	}
-	
+
 	if es, waitErr = task.Wait(ctx); waitErr != nil {
 		return errors.New("KillTask: failed get task exit status channel with error:" + waitErr.Error())
 	}
@@ -273,7 +273,7 @@ func (n Node) KillTask(ctx context.Context, containerID string) (err error) {
 	if killTaskErr = task.Kill(ctx, syscall.SIGKILL); killTaskErr != nil {
 		return errors.New("KillTask: failed to kill task for container " + containerID + " with error: " + killTaskErr.Error())
 	}
-	
+
 	<-es
 
 	return nil
