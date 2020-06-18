@@ -46,9 +46,9 @@ func Execute() {
 	defer logger.Sync()
 
 	nodeSvc := node.NewNode(ctr)
+	nodeSvc = log.NewLoggingNode(logger, nodeSvc)
 
-	var resolverSet *api.ResolverSet
-	resolverSet = api.NewResolverSet(nodeSvc)
+	resolverSet := api.NewResolverSet(nodeSvc)
 	resolverSet = log.NewLoggingResolverSet(logger, resolverSet)
 
 	gqlSchema, gqlSchemaErr := node_api.NewGraphQLSchema(nodeSvc, resolverSet)
