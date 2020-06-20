@@ -7,12 +7,12 @@ package node
 
 import (
 	"context"
-	"errors"
+	"strings"
 	"syscall"
-
+	"fmt"
 	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/oci"
+	"github.com/containerd/containerd/cio"
 )
 
 // Node implements the Service interfaces.
@@ -81,16 +81,6 @@ func (n Node) GetImage(ctx context.Context, name string) (i Image, err error) {
 	return newImage(image), err
 }
 
-func (n Node) getImage(ctx context.Context, name string) (i containerd.Image, err error) {
-	image, err := n.Ctr.GetImage(ctx, name)
-
-	if err != nil {
-		return nil, errors.New("GetImage: failed to get image " + name + " with error: " + err.Error())
-	}
-
-	return image, nil
-}
-
 // CreateContainer creates a containerd.Container instance with the given id using the given image.
 // It returns the created containerd.Container.
 func (n Node) CreateContainer(ctx context.Context, imageName, id string) (c Container, err error) {
@@ -101,7 +91,7 @@ func (n Node) CreateContainer(ctx context.Context, imageName, id string) (c Cont
 	)
 
 	if image, getImageErr = n.getImage(ctx, imageName); getImageErr != nil {
-		return nil, errors.New("Node failed to get image " + imageName + " with error: " + getImageErr.Error())
+		return nil, fmt.Errorf("failed to get image %s for container %s: %w", imageName, id, getImageErr)
 	}
 
 	container, createErr = n.Ctr.NewContainer(
@@ -113,7 +103,7 @@ func (n Node) CreateContainer(ctx context.Context, imageName, id string) (c Cont
 	)
 
 	if createErr != nil {
-		return nil, errors.New("Node failed to create container " + id + " with error: " + createErr.Error())
+		return nil, fmt.Errorf("failed to create container %s: %w", id, createErr)
 	}
 
 	return newContainer(container), nil
@@ -130,11 +120,11 @@ func (n Node) CreateTask(ctx context.Context, containerID string) (t Task, err e
 	)
 
 	if loadContainerErr != nil {
-		return nil, errors.New("Node failed to load container " + containerID + " with error: " + loadContainerErr.Error())
+		return nil, fmt.Errorf("failed to load container %s: %w", containerID, loadContainerErr)
 	}
 
 	if task, newTaskErr = container.NewTask(ctx, cio.NewCreator(cio.WithStdio)); newTaskErr != nil {
-		return nil, errors.New("Node failed to create task with error: " + newTaskErr.Error())
+		return nil, fmt.Errorf("failed to create task for container %s: %w", containerID, newTaskErr)
 	}
 
 	return newTask(task), nil
@@ -152,22 +142,12 @@ func (n Node) PullImage(ctx context.Context, ref string) (i Image, err error) {
 	return newImage(img), nil
 }
 
-func (n Node) pullImage(ctx context.Context, ref string) (image containerd.Image, err error) {
-	image, pullImageErr := n.Ctr.Pull(ctx, ref, containerd.WithPullUnpack)
-
-	if pullImageErr != nil {
-		return nil, errors.New("PullImage: failed to pull image ref " + ref + " with error: " + pullImageErr.Error())
-	}
-
-	return image, nil
-}
-
 // GetImages returns a list of all containerd.Image instances known to the containerd daemon.
 func (n Node) GetImages(ctx context.Context, filter string) (images []Image, err error) {
 	imgs, getImagesErr := n.Ctr.ListImages(ctx, filter)
 
 	if getImagesErr != nil {
-		return nil, errors.New("GetImages: failed to get images using filter " + filter + " with error: " + getImagesErr.Error())
+		return nil, fmt.Errorf("failed to get images using filter %s: %w", filter, getImagesErr)
 	}
 
 	for _, i := range imgs {
@@ -183,22 +163,12 @@ func (n Node) GetContainer(ctx context.Context, containerID string) (c Container
 	return newContainer(container), err
 }
 
-func (n Node) getContainer(ctx context.Context, containerID string) (c containerd.Container, err error) {
-	container, loadContainerErr := n.Ctr.LoadContainer(ctx, containerID)
-
-	if loadContainerErr != nil {
-		return nil, errors.New("GetContainer: failed to load container " + containerID + " with error: " + loadContainerErr.Error())
-	}
-
-	return container, nil
-}
-
 // GetContainers returns a list of all containerd.Container instances known to the containerd daemon.
 func (n Node) GetContainers(ctx context.Context, filter string) (cs []Container, err error) {
 	containers, getContainersErr := n.Ctr.Containers(ctx, filter)
 
 	if getContainersErr != nil {
-		return nil, errors.New("GetImages: failed to get containers using filter " + filter + " with error: " + getContainersErr.Error())
+		return nil, fmt.Errorf("failed to get containers using filter %s: %w", filter, getContainersErr)
 	}
 
 	for _, c := range containers {
@@ -215,36 +185,19 @@ func (n Node) GetTask(ctx context.Context, containerID string) (t Task, err erro
 	return newTask(task), err
 }
 
-func (n Node) getTask(ctx context.Context, containerID string) (task containerd.Task, err error) {
-	container, getContainerErr := n.getContainer(ctx, containerID)
-
-	if getContainerErr != nil {
-		return nil, errors.New("GetTask: failed to load task for container " + containerID + " with error: " + getContainerErr.Error())
-	}
-
-	task, taskErr := container.Task(ctx, nil)
-
-	if taskErr != nil {
-		return nil, errors.New("GetTask: failed to load task for container " + containerID + " with error: " + taskErr.Error())
-	}
-
-	return task, nil
-}
-
 // GetTasks returns a list of all containerd.Task instances known to the containerd daemon.
 func (n Node) GetTasks(ctx context.Context, filter string) (tasks []Task, err error) {
 	containers, getContainersErr := n.Ctr.Containers(ctx, filter)
 
 	if getContainersErr != nil {
-		return nil, errors.New("GetTask: failed to list containers using filter " + filter + " with error: " + getContainersErr.Error())
+		return nil, fmt.Errorf("failed to list containers using filter %s: %w", filter, getContainersErr)
 	}
 
 	for _, container := range containers {
 		task, taskErr := container.Task(ctx, nil)
 
 		if taskErr != nil {
-			//TODO: Log error
-			continue
+			return nil, fmt.Errorf("failed to build task list: %w", taskErr)
 		}
 
 		tasks = append(tasks, newTask(task))
@@ -263,15 +216,15 @@ func (n Node) KillTask(ctx context.Context, containerID string) (err error) {
 	)
 
 	if task, getTaskErr = n.getTask(ctx, containerID); getTaskErr != nil {
-		return errors.New("KillTask: failed to get container " + containerID + " with error: " + getTaskErr.Error())
+		return fmt.Errorf("failed to get container %s: %w", containerID, getTaskErr)
 	}
 
 	if es, waitErr = task.Wait(ctx); waitErr != nil {
-		return errors.New("KillTask: failed get task exit status channel with error:" + waitErr.Error())
+		return fmt.Errorf("failed to get task exit status channel: %w", waitErr)
 	}
 
 	if killTaskErr = task.Kill(ctx, syscall.SIGKILL); killTaskErr != nil {
-		return errors.New("KillTask: failed to kill task for container " + containerID + " with error: " + killTaskErr.Error())
+		return fmt.Errorf("failed to kill task for container %s: %w", containerID, killTaskErr)
 	}
 
 	<-es
@@ -283,7 +236,7 @@ func (n Node) KillTask(ctx context.Context, containerID string) (err error) {
 func (n Node) DeleteImage(ctx context.Context, name string) (err error) {
 
 	if deleteImageErr := n.Ctr.ImageService().Delete(ctx, name); deleteImageErr != nil {
-		return errors.New("DeleteImage: failed to delete image " + name + " with error: " + deleteImageErr.Error())
+		return fmt.Errorf("failed to delete image %s: %w", name, deleteImageErr)
 	}
 
 	return nil
@@ -293,7 +246,7 @@ func (n Node) DeleteImage(ctx context.Context, name string) (err error) {
 func (n Node) DeleteContainer(ctx context.Context, id string) (err error) {
 
 	if deleteContainerErr := n.Ctr.ContainerService().Delete(ctx, id); deleteContainerErr != nil {
-		return errors.New("DeleteContainer: failed to delete container " + id + " with error: " + deleteContainerErr.Error())
+		return fmt.Errorf("failed to delete container %s: %w", id, deleteContainerErr)
 	}
 
 	return nil
@@ -308,12 +261,64 @@ func (n Node) DeleteTask(ctx context.Context, containerID string) (exitStatus Ex
 	)
 
 	if task, getTaskErr = n.getTask(ctx, containerID); getTaskErr != nil {
-		return ExitStatus{}, errors.New("DeleteTask: failed to get task for container " + containerID + " with error: " + getTaskErr.Error())
+		return ExitStatus{}, fmt.Errorf("failed to get task for container %s: %w", containerID, getTaskErr)
 	}
 
 	if taskExitStatus, deleteTaskErr = task.Delete(ctx); deleteTaskErr != nil {
-		return ExitStatus{}, errors.New("DeleteTask: failed to delete task for container " + containerID + " with error: " + deleteTaskErr.Error())
+		return ExitStatus{}, fmt.Errorf("failed to delete task for container %s: %w", containerID, deleteTaskErr)
 	}
 
 	return ExitStatus(*taskExitStatus), nil
+}
+
+func (n Node) getImage(ctx context.Context, name string) (i containerd.Image, err error) {
+	image, err := n.Ctr.GetImage(ctx, name)
+
+	if err == nil {
+		return image, nil
+	} else if err.Error() == "image \""+name+"\": not found" {
+		return nil, ErrNotFound{name: name, inner: err}
+	} else {
+		return nil, fmt.Errorf("failed to get image %s: %w", name, err)
+	}
+}
+
+func (n Node) pullImage(ctx context.Context, ref string) (image containerd.Image, err error) {
+	image, pullImageErr := n.Ctr.Pull(ctx, ref, containerd.WithPullUnpack)
+
+	if pullImageErr == nil {
+		return image, nil
+	} else if pullImageErr.Error() == "failed to resolve reference \""+ref+"\": object required" {
+		return nil, ErrNotFound{name: ref, inner: pullImageErr}
+	} else {
+		return nil, fmt.Errorf("failed to pull image %s: %w", ref, pullImageErr)
+	}
+}
+
+func (n Node) getContainer(ctx context.Context, containerID string) (c containerd.Container, err error) {
+	container, loadContainerErr := n.Ctr.LoadContainer(ctx, containerID)
+
+	if loadContainerErr == nil {
+		return container, nil
+	} else if strings.HasSuffix(loadContainerErr.Error(), "not found") {
+		return nil, ErrNotFound{name: containerID, inner: loadContainerErr}
+	} else {
+		return nil, fmt.Errorf("failed to load container %s: %w", containerID, loadContainerErr)
+	}
+}
+
+func (n Node) getTask(ctx context.Context, containerID string) (task containerd.Task, err error) {
+	container, getContainerErr := n.getContainer(ctx, containerID)
+
+	if getContainerErr != nil {
+		return nil, fmt.Errorf("failed to get container for task %s: %w", containerID, getContainerErr)
+	}
+
+	task, taskErr := container.Task(ctx, nil)
+
+	if taskErr != nil {
+		return nil, fmt.Errorf("failed to load task for container %s: %w", containerID, taskErr)
+	}
+
+	return task, nil
 }

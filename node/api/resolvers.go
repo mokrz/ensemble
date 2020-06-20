@@ -2,7 +2,7 @@ package api
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
 	"github.com/containerd/containerd/namespaces"
 	"github.com/graphql-go/graphql"
@@ -86,17 +86,17 @@ func NewImageResolver(svc node.ImageService) graphql.FieldResolveFn {
 		)
 
 		if namespace, namespaceValid = p.Args["namespace"].(string); !namespaceValid {
-			return nil, errors.New("invalid request")
+			return nil, fmt.Errorf("invalid request")
 		}
 
 		if ref, refValid = p.Args["ref"].(string); !refValid {
-			return nil, errors.New("invalid request")
+			return nil, fmt.Errorf("invalid request")
 		}
 
 		ctx := namespaces.WithNamespace(context.Background(), namespace)
 
 		if image, getImageErr = svc.GetImage(ctx, ref); getImageErr != nil {
-			return nil, errors.New("image resolver failed with error: " + getImageErr.Error())
+			return nil, fmt.Errorf("image resolver failed: %w", getImageErr)
 		}
 
 		return getImageInfo(ctx, image), nil
@@ -114,20 +114,20 @@ func NewImagesResolver(svc node.ImageService) graphql.FieldResolveFn {
 		)
 
 		if namespace, namespaceValid = p.Args["namespace"].(string); !namespaceValid {
-			return nil, errors.New("invalid request")
+			return nil, fmt.Errorf("invalid request")
 		}
 
 		if p.Args["filter"] != nil {
 
 			if filter, filterValid = p.Args["filter"].(string); !filterValid {
-				return nil, errors.New("invalid request")
+				return nil, fmt.Errorf("invalid request")
 			}
 		}
 
 		ctx := namespaces.WithNamespace(context.Background(), namespace)
 
 		if images, getImagesErr = svc.GetImages(ctx, filter); getImagesErr != nil {
-			return nil, errors.New("images resolver failed with error: " + getImagesErr.Error())
+			return nil, fmt.Errorf("images resolver failed: %w", getImagesErr)
 		}
 
 		var decoratedImages []Image
@@ -147,7 +147,6 @@ func getContainerInfo(ctx context.Context, c node.Container) Container {
 	)
 
 	if containerImage, getImageErr = c.Image(ctx); getImageErr != nil {
-		// This probably won't ever happen
 		return Container{}
 	}
 
@@ -177,17 +176,17 @@ func NewContainerResolver(svc node.ContainerService) graphql.FieldResolveFn {
 		)
 
 		if namespace, namespaceValid = p.Args["namespace"].(string); !namespaceValid {
-			return nil, errors.New("invalid request")
+			return nil, fmt.Errorf("invalid request")
 		}
 
 		if id, idValid = p.Args["id"].(string); !idValid {
-			return nil, errors.New("invalid request")
+			return nil, fmt.Errorf("invalid request")
 		}
 
 		ctx := namespaces.WithNamespace(context.Background(), namespace)
 
 		if container, getContainerErr = svc.GetContainer(ctx, id); getContainerErr != nil {
-			return nil, errors.New("container resolver failed with error: " + getContainerErr.Error())
+			return nil, fmt.Errorf("container resolver failed: %w", getContainerErr)
 		}
 
 		return getContainerInfo(ctx, container), nil
@@ -205,20 +204,20 @@ func NewContainersResolver(svc node.ContainerService) graphql.FieldResolveFn {
 		)
 
 		if namespace, namespaceValid = p.Args["namespace"].(string); !namespaceValid {
-			return nil, errors.New("invalid request")
+			return nil, fmt.Errorf("invalid request")
 		}
 
 		if p.Args["filter"] != nil {
 
 			if filter, filterValid = p.Args["filter"].(string); !filterValid {
-				return nil, errors.New("invalid request")
+				return nil, fmt.Errorf("invalid request")
 			}
 		}
 
 		ctx := namespaces.WithNamespace(context.Background(), namespace)
 
 		if containers, getContainersErr = svc.GetContainers(ctx, filter); getContainersErr != nil {
-			return nil, errors.New("containers resolver failed with error: " + getContainersErr.Error())
+			return nil, fmt.Errorf("containers resolver failed: %w", getContainersErr)
 		}
 
 		var decoratedContainers []Container
@@ -260,20 +259,20 @@ func NewTaskResolver(svc node.TaskService) graphql.FieldResolveFn {
 		)
 
 		if namespace, namespaceValid = p.Args["namespace"].(string); !namespaceValid {
-			return nil, errors.New("invalid request")
+			return nil, fmt.Errorf("invalid request")
 		}
 
 		if p.Args["container_id"] != nil {
 
 			if containerID, containerIDValid = p.Args["container_id"].(string); !containerIDValid {
-				return nil, errors.New("invalid request")
+				return nil, fmt.Errorf("invalid request")
 			}
 		}
 
 		ctx := namespaces.WithNamespace(context.Background(), namespace)
 
 		if task, getTaskErr = svc.GetTask(ctx, containerID); getTaskErr != nil {
-			return nil, errors.New("container resolver failed with error: " + getTaskErr.Error())
+			return nil, fmt.Errorf("container resolver failed: %w", getTaskErr)
 		}
 
 		return getTaskInfo(ctx, task), nil
@@ -291,20 +290,20 @@ func NewTasksResolver(svc node.TaskService) graphql.FieldResolveFn {
 		)
 
 		if namespace, namespaceValid = p.Args["namespace"].(string); !namespaceValid {
-			return nil, errors.New("invalid request")
+			return nil, fmt.Errorf("invalid request")
 		}
 
 		if p.Args["filter"] != nil {
 
 			if filter, filterValid = p.Args["filter"].(string); !filterValid {
-				return nil, errors.New("invalid request")
+				return nil, fmt.Errorf("invalid request")
 			}
 		}
 
 		ctx := namespaces.WithNamespace(context.Background(), namespace)
 
 		if tasks, getTasksErr = svc.GetTasks(ctx, filter); getTasksErr != nil {
-			return nil, errors.New("containers resolver failed with error: " + getTasksErr.Error())
+			return nil, fmt.Errorf("containers resolver failed: %w", getTasksErr)
 		}
 
 		var decoratedTasks []Task
@@ -327,17 +326,17 @@ func NewCreateImageResolver(svc node.ImageService) graphql.FieldResolveFn {
 		)
 
 		if namespace, namespaceValid = p.Args["namespace"].(string); !namespaceValid {
-			return nil, errors.New("invalid request")
+			return nil, fmt.Errorf("invalid request")
 		}
 
 		if ref, refValid = p.Args["ref"].(string); !refValid {
-			return nil, errors.New("invalid request")
+			return nil, fmt.Errorf("invalid request")
 		}
 
 		ctx := namespaces.WithNamespace(context.Background(), namespace)
 
 		if image, imagePullErr = svc.PullImage(ctx, ref); imagePullErr != nil {
-			return nil, errors.New("createImage resolver failed to create image: " + ref + " with error:  " + imagePullErr.Error())
+			return nil, fmt.Errorf("createImage resolver failed to create image %s: %w", ref, imagePullErr)
 		}
 
 		return getImageInfo(ctx, image), nil
@@ -357,28 +356,28 @@ func NewCreateContainerResolver(sp node.ContainerService) graphql.FieldResolveFn
 		if p.Args["namespace"] != nil {
 
 			if namespace, namespaceValid = p.Args["namespace"].(string); !namespaceValid {
-				return nil, errors.New("invalid request")
+				return nil, fmt.Errorf("invalid request")
 			}
 		}
 
 		if p.Args["image"] != nil {
 
 			if imageName, imageNameValid = p.Args["image"].(string); !imageNameValid {
-				return nil, errors.New("invalid request")
+				return nil, fmt.Errorf("invalid request")
 			}
 		}
 
 		if p.Args["id"] != nil {
 
 			if ID, IDValid = p.Args["id"].(string); !IDValid {
-				return nil, errors.New("invalid request")
+				return nil, fmt.Errorf("invalid request")
 			}
 		}
 
 		ctx := namespaces.WithNamespace(context.Background(), namespace)
 
 		if container, containerCreateErr = sp.CreateContainer(ctx, imageName, ID); containerCreateErr != nil {
-			return nil, errors.New("createContainer resolver failed to create container: " + ID + " with error:  " + containerCreateErr.Error())
+			return nil, fmt.Errorf("createContainer resolver failed to create container %s: %w", ID, containerCreateErr)
 		}
 
 		return getContainerInfo(ctx, container), nil
@@ -398,21 +397,21 @@ func NewCreateTaskResolver(ns node.TaskService) graphql.FieldResolveFn {
 		if p.Args["namespace"] != nil {
 
 			if namespace, namespaceValid = p.Args["namespace"].(string); !namespaceValid {
-				return nil, errors.New("invalid request")
+				return nil, fmt.Errorf("invalid request")
 			}
 		}
 
 		if p.Args["container_id"] != nil {
 
 			if containerID, containerIDValid = p.Args["container_id"].(string); !containerIDValid {
-				return nil, errors.New("invalid request")
+				return nil, fmt.Errorf("invalid request")
 			}
 		}
 
 		ctx := namespaces.WithNamespace(context.Background(), namespace)
 
 		if task, createTaskErr = ns.CreateTask(ctx, containerID); createTaskErr != nil {
-			return nil, errors.New("createTask resolver failed to create task for container: " + containerID + " with error:  " + createTaskErr.Error())
+			return nil, fmt.Errorf("createTask resolver failed to create task for container %s: %w", containerID, createTaskErr)
 		}
 
 		return getTaskInfo(ctx, task), nil
@@ -431,19 +430,19 @@ func NewKillTaskResolver(ns node.TaskService) graphql.FieldResolveFn {
 		if p.Args["namespace"] != nil {
 
 			if namespace, namespaceValid = p.Args["namespace"].(string); !namespaceValid {
-				return nil, errors.New("invalid request")
+				return nil, fmt.Errorf("invalid request")
 			}
 		}
 
 		if p.Args["container_id"] != nil {
 
 			if containerID, containerIDValid = p.Args["container_id"].(string); !containerIDValid {
-				return nil, errors.New("invalid request")
+				return nil, fmt.Errorf("invalid request")
 			}
 		}
 
 		if killTaskErr = ns.KillTask(namespaces.WithNamespace(context.Background(), namespace), containerID); killTaskErr != nil {
-			return nil, errors.New("killTask resolver failed with error: " + killTaskErr.Error())
+			return nil, fmt.Errorf("killTask resolver failed to kill task for %s: %w", containerID, killTaskErr)
 		}
 
 		return nil, nil
@@ -462,19 +461,19 @@ func NewDeleteImageResolver(ns node.ImageService) graphql.FieldResolveFn {
 		if p.Args["namespace"] != nil {
 
 			if namespace, namespaceValid = p.Args["namespace"].(string); !namespaceValid {
-				return nil, errors.New("invalid request")
+				return nil,fmt.Errorf("invalid request")
 			}
 		}
 
 		if p.Args["ref"] != nil {
 
 			if ref, refValid = p.Args["ref"].(string); !refValid {
-				return nil, errors.New("invalid request")
+				return nil, fmt.Errorf("invalid request")
 			}
 		}
 
 		if deleteImageErr = ns.DeleteImage(namespaces.WithNamespace(context.Background(), namespace), ref); deleteImageErr != nil {
-			return nil, errors.New("deleteImage resolver failed with error: " + deleteImageErr.Error())
+			return nil, fmt.Errorf("deleteImage resolver failed to delete %s: %w", ref, deleteImageErr)
 		}
 
 		return nil, nil
@@ -493,19 +492,19 @@ func NewDeleteContainerResolver(ns node.ContainerService) graphql.FieldResolveFn
 		if p.Args["namespace"] != nil {
 
 			if namespace, namespaceValid = p.Args["namespace"].(string); !namespaceValid {
-				return nil, errors.New("invalid request")
+				return nil, fmt.Errorf("invalid request")
 			}
 		}
 
 		if p.Args["id"] != nil {
 
 			if ID, IDValid = p.Args["id"].(string); !IDValid {
-				return nil, errors.New("invalid request")
+				return nil, fmt.Errorf("invalid request")
 			}
 		}
 
 		if deleteContainerErr = ns.DeleteContainer(namespaces.WithNamespace(context.Background(), namespace), ID); deleteContainerErr != nil {
-			return nil, errors.New("deleteContainer resolver failed with error: " + deleteContainerErr.Error())
+			return nil, fmt.Errorf("deleteContainer resolver failed to delete %s: %w", ID, deleteContainerErr)
 		}
 
 		return nil, nil
@@ -525,19 +524,19 @@ func NewDeleteTaskResolver(ns node.TaskService) graphql.FieldResolveFn {
 		if p.Args["namespace"] != nil {
 
 			if namespace, namespaceValid = p.Args["namespace"].(string); !namespaceValid {
-				return nil, errors.New("invalid request")
+				return nil, fmt.Errorf("invalid request")
 			}
 		}
 
 		if p.Args["container_id"] != nil {
 
 			if containerID, containerIDValid = p.Args["container_id"].(string); !containerIDValid {
-				return nil, errors.New("invalid request")
+				return nil, fmt.Errorf("invalid request")
 			}
 		}
 
 		if exitStatus, deleteTaskErr = ns.DeleteTask(namespaces.WithNamespace(context.Background(), namespace), containerID); deleteTaskErr != nil {
-			return nil, errors.New("deleteTask resolver failed with error: " + deleteTaskErr.Error())
+			return nil, fmt.Errorf("deleteTask resolver failed to delete task for %s: %w", containerID, deleteTaskErr)
 		}
 
 		return exitStatus, nil

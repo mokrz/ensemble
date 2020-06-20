@@ -3,6 +3,7 @@ package log
 import (
 	"context"
 	"time"
+	"errors"
 
 	"github.com/containerd/containerd/namespaces"
 	"github.com/mokrz/clamor/node"
@@ -37,6 +38,7 @@ func baseFields(ctx context.Context) []zap.Field {
 }
 
 func (ln *loggingNode) PullImage(ctx context.Context, name string) (image node.Image, err error) {
+	var dne node.ErrNotFound
 	logFields := baseFields(ctx)
 	logFields = append(logFields, zap.String("image", name))
 	msg := "PullImage"
@@ -44,18 +46,23 @@ func (ln *loggingNode) PullImage(ctx context.Context, name string) (image node.I
 	defer func(took time.Time) {
 		logFields = append(logFields, zap.String("took", time.Since(took).String()))
 
-		if image, err = ln.next.PullImage(ctx, name); err != nil {
+		if image, err = ln.next.PullImage(ctx, name); err == nil {
+			ln.logger.Info(msg, logFields...)
+		} else if errors.As(err, &dne) {
+			logFields = append(logFields, zap.String("error", dne.Error()))
+			ln.logger.Warn(msg, logFields...)
+		} else {
 			logFields = append(logFields, zap.String("error", err.Error()))
 			ln.logger.Error(msg, logFields...)
-		} else {
-			ln.logger.Info(msg, logFields...)
 		}
+
 	}(time.Now())
 
 	return image, err
 }
 
 func (ln *loggingNode) GetImage(ctx context.Context, name string) (image node.Image, err error) {
+	var dne node.ErrNotFound
 	logFields := baseFields(ctx)
 	logFields = append(logFields, zap.String("image", name))
 	msg := "GetImage"
@@ -63,12 +70,16 @@ func (ln *loggingNode) GetImage(ctx context.Context, name string) (image node.Im
 	defer func(took time.Time) {
 		logFields = append(logFields, zap.String("took", time.Since(took).String()))
 
-		if image, err = ln.next.GetImage(ctx, name); err != nil {
+		if image, err = ln.next.GetImage(ctx, name); err == nil {
+			ln.logger.Info(msg, logFields...)
+		} else if errors.As(err, &dne) {
+			logFields = append(logFields, zap.String("error", err.Error()))
+			ln.logger.Warn(msg, logFields...)
+		} else {
 			logFields = append(logFields, zap.String("error", err.Error()))
 			ln.logger.Error(msg, logFields...)
-		} else {
-			ln.logger.Info(msg, logFields...)
 		}
+
 	}(time.Now())
 
 	return image, err
@@ -88,6 +99,7 @@ func (ln *loggingNode) GetImages(ctx context.Context, filter string) (images []n
 		} else {
 			ln.logger.Info(msg, logFields...)
 		}
+
 	}(time.Now())
 
 	return images, err
@@ -133,6 +145,7 @@ func (ln *loggingNode) CreateContainer(ctx context.Context, imageName string, id
 }
 
 func (ln *loggingNode) GetContainer(ctx context.Context, id string) (container node.Container, err error) {
+	var dne node.ErrNotFound
 	logFields := baseFields(ctx)
 	logFields = append(logFields, zap.String("id", id))
 	msg := "GetContainer"
@@ -140,12 +153,16 @@ func (ln *loggingNode) GetContainer(ctx context.Context, id string) (container n
 	defer func(took time.Time) {
 		logFields = append(logFields, zap.String("took", time.Since(took).String()))
 
-		if container, err = ln.next.GetContainer(ctx, id); err != nil {
+		if container, err = ln.next.GetContainer(ctx, id); err == nil {
+			ln.logger.Info(msg, logFields...)
+		} else if errors.As(err, &dne) {
+			logFields = append(logFields, zap.String("error", dne.Error()))
+			ln.logger.Warn(msg, logFields...)
+		} else {
 			logFields = append(logFields, zap.String("error", err.Error()))
 			ln.logger.Error(msg, logFields...)
-		} else {
-			ln.logger.Info(msg, logFields...)
 		}
+		
 	}(time.Now())
 
 	return container, err

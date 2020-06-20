@@ -2,7 +2,7 @@ package node
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"os"
 )
 
@@ -19,14 +19,14 @@ func LoadConfig(path string) (cfg *Config, err error) {
 	file, openErr := os.Open(path)
 
 	if openErr != nil {
-		return nil, errors.New("LoadConfig: os.Open failed with error: " + openErr.Error())
+		return nil, fmt.Errorf("failed to open %s: %w", path, openErr)
 	}
 
 	var buff Config
 	decodeErr := json.NewDecoder(file).Decode(&buff)
 
 	if decodeErr != nil {
-		return nil, errors.New("LoadConfig: Decoder.Decode failed with error: " + decodeErr.Error())
+		return nil, fmt.Errorf("failed to decode %s: %w", path, decodeErr)
 	}
 
 	return &buff, nil

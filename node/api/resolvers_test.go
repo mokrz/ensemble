@@ -2,7 +2,7 @@ package api_test
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/containerd/containerd/cio"
@@ -43,7 +43,7 @@ func (is *imageSvc) GetImage(ctx context.Context, name string) (image node.Image
 	var imageValid bool
 
 	if image, imageValid = is.images[name]; !imageValid {
-		return nil, errors.New("invalid image")
+		return nil, fmt.Errorf("invalid image")
 	}
 
 	return image, nil
@@ -109,7 +109,7 @@ func (cs *containerService) GetContainer(ctx context.Context, id string) (contai
 	var containerValid bool
 
 	if container, containerValid = cs.containers[id]; !containerValid {
-		return nil, errors.New("invalid container")
+		return nil, fmt.Errorf("invalid container")
 	}
 
 	return container, nil
@@ -181,7 +181,7 @@ func (ts *taskService) GetTask(ctx context.Context, containerID string) (task no
 	var taskValid bool
 
 	if task, taskValid = ts.tasks[containerID]; !taskValid {
-		return nil, errors.New("invalid task")
+		return nil, fmt.Errorf("invalid task")
 	}
 
 	return task, nil

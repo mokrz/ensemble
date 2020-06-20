@@ -38,6 +38,7 @@ func NewLoggingResolver(l *zap.Logger, resolver string, r graphql.FieldResolveFn
 			}
 
 			logFields = append(logFields, zap.String("took", time.Since(took).String()))
+			
 			l.Info(resolver, logFields...)
 		}(time.Now())
 
