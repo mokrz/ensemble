@@ -2,7 +2,6 @@ package node_test
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math/rand"
 	"syscall"
@@ -595,13 +594,13 @@ func (c *ctrd) getTask(ctx context.Context, containerID string) (containerd.Task
 	container, getContainerErr := c.getContainer(ctx, containerID)
 
 	if getContainerErr != nil {
-		return nil, errors.New("GetTask: failed to load task for container " + containerID + " with error: " + getContainerErr.Error())
+		return nil, fmt.Errorf("failed to load container for task %s: %w", containerID, getContainerErr)
 	}
 
 	task, taskErr := container.Task(ctx, nil)
 
 	if taskErr != nil {
-		return nil, errors.New("GetTask: failed to load task for container " + containerID + " with error: " + taskErr.Error())
+		return nil, fmt.Errorf("failed to load task for container %s: %w", containerID, taskErr)
 	}
 
 	return task, nil
